@@ -38,6 +38,17 @@ type ClusterMutationResponse = {
 }
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'
+const PEOPLE_PAGE_SIZE = 100
+const PEOPLE_POLL_INTERVAL_MS = 5000
+
+function useDebouncedValue<T>(value: T, delayMs: number): T {
+  const [debounced, setDebounced] = useState(value)
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebounced(value), delayMs)
+    return () => window.clearTimeout(timer)
+  }, [value, delayMs])
+  return debounced
+}
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const headers = new Headers(init?.headers)
@@ -217,17 +228,71 @@ function PeoplePage() {
   const [clusters, setClusters] = useState<PersonCluster[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [offset, setOffset] = useState(0)
+  const [total, setTotal] = useState(0)
+  const [searchInput, setSearchInput] = useState('')
+  const debouncedSearch = useDebouncedValue(searchInput, 300)
+
+  const load = async () => {
+    try {
+      const params = new URLSearchParams({
+        limit: String(PEOPLE_PAGE_SIZE),
+        offset: String(offset),
+        sort_by: 'name',
+        sort_dir: 'asc',
+      })
+      if (debouncedSearch.trim()) params.set('search', debouncedSearch.trim())
+      const res = await api<{ items: PersonCluster[]; total: number }>(`/people?${params.toString()}`)
+      setClusters(res.items)
+      setTotal(res.total)
+      setError('')
+    } catch (e) {
+      setError((e as Error).message)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    api<{ items: PersonCluster[]; total: number }>('/people?limit=100')
-      .then((res) => setClusters(res.items))
-      .catch((e) => setError((e as Error).message))
-      .finally(() => setLoading(false))
-  }, [])
+    setOffset(0)
+  }, [debouncedSearch])
+
+  useEffect(() => {
+    load()
+    const timer = setInterval(load, PEOPLE_POLL_INTERVAL_MS)
+    return () => clearInterval(timer)
+  }, [offset, debouncedSearch])
+
+  const pageStart = total === 0 ? 0 : offset + 1
+  const pageEnd = Math.min(offset + clusters.length, total)
+  const canPrev = offset > 0
+  const canNext = offset + PEOPLE_PAGE_SIZE < total
 
   return (
     <section>
       <h2>People clusters</h2>
+      <div style={{ marginBottom: 12 }}>
+        <input
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          placeholder="Search by cluster name prefix"
+          style={{ width: 280, marginRight: 8 }}
+        />
+        <span style={{ fontSize: 13, color: '#555' }}>
+          Sorted by name (A→Z)
+        </span>
+      </div>
+      <div style={{ marginBottom: 12 }}>
+        <button onClick={() => setOffset((prev) => Math.max(0, prev - PEOPLE_PAGE_SIZE))} disabled={!canPrev}>
+          ← Prev 100
+        </button>
+        <button onClick={() => setOffset((prev) => prev + PEOPLE_PAGE_SIZE)} disabled={!canNext} style={{ marginLeft: 8 }}>
+          Next 100 →
+        </button>
+        <span style={{ marginLeft: 12, fontSize: 13 }}>
+          {pageStart}-{pageEnd} of {total}
+        </span>
+      </div>
       {loading && <p>Loading clusters...</p>}
       {error && <p style={{ color: 'crimson' }}>{error}</p>}
       <div style={{ display: 'grid', gap: 12, gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}>
@@ -254,7 +319,11 @@ function PersonDetailPage({ clusterId }: { clusterId: number }) {
   const [selectedFaceIds, setSelectedFaceIds] = useState<number[]>([])
   const [destinationName, setDestinationName] = useState('')
   const [mergeTargetId, setMergeTargetId] = useState('')
-  const [allClusters, setAllClusters] = useState<PersonCluster[]>([])
+  const [mergeClusters, setMergeClusters] = useState<PersonCluster[]>([])
+  const [mergeTotal, setMergeTotal] = useState(0)
+  const [mergeOffset, setMergeOffset] = useState(0)
+  const [mergeSearchInput, setMergeSearchInput] = useState('')
+  const debouncedMergeSearch = useDebouncedValue(mergeSearchInput, 300)
   const [mutationMessage, setMutationMessage] = useState('')
 
   const load = async () => {
@@ -274,10 +343,34 @@ function PersonDetailPage({ clusterId }: { clusterId: number }) {
 
   useEffect(() => {
     load()
-    api<{ items: PersonCluster[]; total: number }>('/people?limit=300')
-      .then((res) => setAllClusters(res.items))
-      .catch(() => undefined)
   }, [clusterId])
+
+  const loadMergeCandidates = async () => {
+    try {
+      const params = new URLSearchParams({
+        limit: String(PEOPLE_PAGE_SIZE),
+        offset: String(mergeOffset),
+        sort_by: 'name',
+        sort_dir: 'asc',
+      })
+      if (debouncedMergeSearch.trim()) params.set('search', debouncedMergeSearch.trim())
+      const res = await api<{ items: PersonCluster[]; total: number }>(`/people?${params.toString()}`)
+      setMergeClusters(res.items.filter((cluster) => cluster.id !== clusterId))
+      setMergeTotal(Math.max(0, res.total - 1))
+    } catch {
+      // Keep the main page working even if merge candidate loading fails.
+    }
+  }
+
+  useEffect(() => {
+    setMergeOffset(0)
+  }, [debouncedMergeSearch, clusterId])
+
+  useEffect(() => {
+    loadMergeCandidates()
+    const timer = setInterval(loadMergeCandidates, PEOPLE_POLL_INTERVAL_MS)
+    return () => clearInterval(timer)
+  }, [clusterId, mergeOffset, debouncedMergeSearch])
 
   const rename = async () => {
     try {
@@ -378,18 +471,36 @@ function PersonDetailPage({ clusterId }: { clusterId: number }) {
         </button>
       </div>
       <div style={{ marginBottom: 16 }}>
+        <input
+          value={mergeSearchInput}
+          onChange={(e) => setMergeSearchInput(e.target.value)}
+          placeholder="Search merge target (prefix)"
+          style={{ width: 220, marginRight: 8 }}
+        />
         <select value={mergeTargetId} onChange={(e) => setMergeTargetId(e.target.value)}>
           <option value="">Merge current into...</option>
-          {allClusters
-            .filter((cluster) => cluster.id !== clusterId)
-            .map((cluster) => (
-              <option key={cluster.id} value={cluster.id}>
-                {cluster.id} — {cluster.name}
-              </option>
-            ))}
+          {mergeClusters.map((cluster) => (
+            <option key={cluster.id} value={cluster.id}>
+              {cluster.id} — {cluster.name}
+            </option>
+          ))}
         </select>
         <button onClick={mergeIntoTarget} disabled={!mergeTargetId} style={{ marginLeft: 8 }}>
           Merge cluster
+        </button>
+        <button
+          onClick={() => setMergeOffset((prev) => Math.max(0, prev - PEOPLE_PAGE_SIZE))}
+          disabled={mergeOffset === 0}
+          style={{ marginLeft: 8 }}
+        >
+          Prev
+        </button>
+        <button
+          onClick={() => setMergeOffset((prev) => prev + PEOPLE_PAGE_SIZE)}
+          disabled={mergeOffset + PEOPLE_PAGE_SIZE >= mergeTotal}
+          style={{ marginLeft: 8 }}
+        >
+          Next
         </button>
       </div>
       {mutationMessage && <p style={{ color: 'green' }}>{mutationMessage}</p>}

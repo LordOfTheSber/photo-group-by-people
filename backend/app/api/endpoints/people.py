@@ -46,12 +46,35 @@ def list_jobs(
 
 @router.get("/people", response_model=PersonClusterListResponse)
 def list_person_clusters(
-    limit: int = Query(default=20, ge=1, le=200),
+    limit: int = Query(default=100, ge=1),
     offset: int = Query(default=0, ge=0),
+    search: str | None = Query(default=None),
+    sort_by: str = Query(default="name"),
+    sort_dir: str = Query(default="asc"),
     db: Session = Depends(get_db),
 ) -> PersonClusterListResponse:
-    total = db.query(func.count(PersonCluster.id)).scalar() or 0
-    clusters = db.query(PersonCluster).order_by(PersonCluster.id.asc()).offset(offset).limit(limit).all()
+    settings = get_settings()
+    safe_limit = min(limit, max(1, settings.people_page_size_max_soft))
+
+    query = db.query(PersonCluster)
+    normalized_search = search.strip() if search else ""
+    if normalized_search:
+        query = query.filter(PersonCluster.name.ilike(f"{normalized_search}%"))
+
+    normalized_sort_by = sort_by.lower()
+    normalized_sort_dir = sort_dir.lower()
+    sort_asc = normalized_sort_dir != "desc"
+
+    if normalized_sort_by == "created_at":
+        primary_order = PersonCluster.created_at.asc() if sort_asc else PersonCluster.created_at.desc()
+    elif normalized_sort_by == "id":
+        primary_order = PersonCluster.id.asc() if sort_asc else PersonCluster.id.desc()
+    else:
+        primary_order = PersonCluster.name.asc() if sort_asc else PersonCluster.name.desc()
+
+    secondary_order = PersonCluster.id.asc()
+    total = query.with_entities(func.count(PersonCluster.id)).scalar() or 0
+    clusters = query.order_by(primary_order, secondary_order).offset(offset).limit(safe_limit).all()
 
     items: list[PersonClusterSummary] = []
     for cluster in clusters:
