@@ -25,6 +25,7 @@ pip install -r requirements-ml.txt
 2. Copy `.env.example` to `.env`.
 3. Set `FPS_DATABASE_URL` in `.env`, for example:
    `postgresql+psycopg://postgres:postgres@localhost:5432/face_photo_sorter`
+4. Optional: set `FPS_CORS_ORIGINS` (comma-separated) if frontend runs on a different origin.
 
 ## API (Phase 1 + 2)
 
