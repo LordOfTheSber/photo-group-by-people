@@ -27,7 +27,12 @@ def _ensure_column(table_name: str, column_name: str, ddl_type: str) -> None:
 def _apply_compat_migrations() -> None:
     """Apply small backward-compatible schema fixes for existing databases."""
     _ensure_column("person_cluster", "cover_face_id", "INTEGER")
+
+    # Older Face schema variants may miss one or more columns introduced later.
     _ensure_column("face", "person_cluster_id", "INTEGER")
+    _ensure_column("face", "bbox_json", "TEXT")
+    _ensure_column("face", "embedding_path", "VARCHAR(1024)")
+    _ensure_column("face", "thumbnail_path", "VARCHAR(1024)")
 
 
 def ensure_compat_schema() -> None:
