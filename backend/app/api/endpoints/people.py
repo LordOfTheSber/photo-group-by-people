@@ -13,12 +13,45 @@ from app.schemas.people import (
     ClusterFaceRead,
     ClusterImageListResponse,
     ClusterImageRead,
+    FaceUnassignResponse,
     PersonClusterDetail,
     PersonClusterListResponse,
+    PersonClusterRenameRequest,
     PersonClusterSummary,
 )
 
 router = APIRouter(tags=["read-api"])
+
+
+def _refresh_cluster_links(db: Session, cluster_id: int) -> None:
+    cluster = db.get(PersonCluster, cluster_id)
+    if not cluster:
+        return
+
+    linked_image_ids = {
+        image_id
+        for (image_id,) in db.query(Face.image_id).filter(Face.person_cluster_id == cluster_id).distinct().all()
+    }
+    existing_image_ids = {
+        image_id
+        for (image_id,) in db.query(PersonImage.image_id).filter(PersonImage.person_cluster_id == cluster_id).all()
+    }
+
+    for image_id in linked_image_ids - existing_image_ids:
+        db.add(PersonImage(person_cluster_id=cluster_id, image_id=image_id))
+
+    if existing_image_ids - linked_image_ids:
+        (
+            db.query(PersonImage)
+            .filter(
+                PersonImage.person_cluster_id == cluster_id,
+                PersonImage.image_id.in_(existing_image_ids - linked_image_ids),
+            )
+            .delete(synchronize_session=False)
+        )
+
+    cover_face = db.query(Face).filter(Face.person_cluster_id == cluster_id).order_by(Face.id.asc()).first()
+    cluster.cover_face_id = cover_face.id if cover_face else None
 
 
 @router.get("/jobs", response_model=JobListResponse)
@@ -107,6 +140,50 @@ def get_person_cluster_detail(cluster_id: int, db: Session = Depends(get_db)) ->
             for _, image in person_images
         ],
     )
+
+
+@router.patch("/people/{cluster_id}", response_model=PersonClusterSummary)
+def rename_person_cluster(
+    cluster_id: int,
+    request: PersonClusterRenameRequest,
+    db: Session = Depends(get_db),
+) -> PersonClusterSummary:
+    cluster = db.get(PersonCluster, cluster_id)
+    if not cluster:
+        raise HTTPException(status_code=404, detail="Person cluster not found")
+
+    cluster.name = request.name.strip()
+    db.commit()
+    db.refresh(cluster)
+
+    face_count = db.query(func.count(Face.id)).filter(Face.person_cluster_id == cluster.id).scalar() or 0
+    image_count = db.query(func.count(PersonImage.id)).filter(PersonImage.person_cluster_id == cluster.id).scalar() or 0
+
+    return PersonClusterSummary(
+        id=cluster.id,
+        name=cluster.name,
+        face_count=face_count,
+        image_count=image_count,
+        cover_face_thumbnail_url=f"/assets/faces/{cluster.cover_face_id}/thumbnail" if cluster.cover_face_id else None,
+        created_at=cluster.created_at,
+    )
+
+
+@router.delete("/people/{cluster_id}/faces/{face_id}", response_model=FaceUnassignResponse)
+def unassign_face_from_cluster(cluster_id: int, face_id: int, db: Session = Depends(get_db)) -> FaceUnassignResponse:
+    cluster = db.get(PersonCluster, cluster_id)
+    if not cluster:
+        raise HTTPException(status_code=404, detail="Person cluster not found")
+
+    face = db.get(Face, face_id)
+    if not face or face.person_cluster_id != cluster_id:
+        raise HTTPException(status_code=404, detail="Face is not part of this cluster")
+
+    face.person_cluster_id = None
+    _refresh_cluster_links(db, cluster_id)
+    db.commit()
+
+    return FaceUnassignResponse(cluster_id=cluster_id, face_id=face_id, status="removed")
 
 
 @router.get("/people/{cluster_id}/images", response_model=ClusterImageListResponse)

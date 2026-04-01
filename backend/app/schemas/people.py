@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class PersonClusterSummary(BaseModel):
@@ -42,3 +42,13 @@ class PersonClusterDetail(BaseModel):
 class ClusterImageListResponse(BaseModel):
     items: list[ClusterImageRead]
     total: int
+
+
+class PersonClusterRenameRequest(BaseModel):
+    name: str = Field(min_length=1, max_length=255)
+
+
+class FaceUnassignResponse(BaseModel):
+    cluster_id: int
+    face_id: int
+    status: str
