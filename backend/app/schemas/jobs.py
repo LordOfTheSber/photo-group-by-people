@@ -15,3 +15,8 @@ class JobRead(BaseModel):
     updated_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class JobListResponse(BaseModel):
+    items: list[JobRead]
+    total: int
