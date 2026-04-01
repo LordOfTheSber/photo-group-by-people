@@ -30,6 +30,7 @@ class Face(Base):
     image_id: Mapped[int] = mapped_column(ForeignKey("image.id", ondelete="CASCADE"), index=True)
     bbox_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     embedding_path: Mapped[str | None] = mapped_column(String(1024), nullable=True)
+    thumbnail_path: Mapped[str | None] = mapped_column(String(1024), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), nullable=False)
 
     image: Mapped[Image] = relationship(back_populates="faces")
