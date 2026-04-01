@@ -13,45 +13,19 @@ from app.schemas.people import (
     ClusterFaceRead,
     ClusterImageListResponse,
     ClusterImageRead,
+    ClusterMutationResponse,
+    CreateClusterFromFacesRequest,
     FaceUnassignResponse,
+    MergeClustersRequest,
     PersonClusterDetail,
     PersonClusterListResponse,
     PersonClusterRenameRequest,
     PersonClusterSummary,
+    SplitFacesRequest,
 )
+from app.services.cluster_corrections import _refresh_cluster_links, create_cluster_from_faces, merge_clusters
 
 router = APIRouter(tags=["read-api"])
-
-
-def _refresh_cluster_links(db: Session, cluster_id: int) -> None:
-    cluster = db.get(PersonCluster, cluster_id)
-    if not cluster:
-        return
-
-    linked_image_ids = {
-        image_id
-        for (image_id,) in db.query(Face.image_id).filter(Face.person_cluster_id == cluster_id).distinct().all()
-    }
-    existing_image_ids = {
-        image_id
-        for (image_id,) in db.query(PersonImage.image_id).filter(PersonImage.person_cluster_id == cluster_id).all()
-    }
-
-    for image_id in linked_image_ids - existing_image_ids:
-        db.add(PersonImage(person_cluster_id=cluster_id, image_id=image_id))
-
-    if existing_image_ids - linked_image_ids:
-        (
-            db.query(PersonImage)
-            .filter(
-                PersonImage.person_cluster_id == cluster_id,
-                PersonImage.image_id.in_(existing_image_ids - linked_image_ids),
-            )
-            .delete(synchronize_session=False)
-        )
-
-    cover_face = db.query(Face).filter(Face.person_cluster_id == cluster_id).order_by(Face.id.asc()).first()
-    cluster.cover_face_id = cover_face.id if cover_face else None
 
 
 @router.get("/jobs", response_model=JobListResponse)
@@ -184,6 +158,70 @@ def unassign_face_from_cluster(cluster_id: int, face_id: int, db: Session = Depe
     db.commit()
 
     return FaceUnassignResponse(cluster_id=cluster_id, face_id=face_id, status="removed")
+
+
+@router.post("/people/merge", response_model=ClusterMutationResponse)
+def merge_person_clusters(request: MergeClustersRequest, db: Session = Depends(get_db)) -> ClusterMutationResponse:
+    try:
+        result = merge_clusters(
+            db=db,
+            source_cluster_ids=request.source_cluster_ids,
+            target_cluster_id=request.target_cluster_id,
+        )
+        db.commit()
+    except ValueError as exc:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    return ClusterMutationResponse(
+        status="merged",
+        affected_cluster_ids=result.affected_cluster_ids,
+        moved_face_count=result.moved_face_count,
+    )
+
+
+@router.post("/people/split", response_model=ClusterMutationResponse)
+def split_faces_from_cluster(request: SplitFacesRequest, db: Session = Depends(get_db)) -> ClusterMutationResponse:
+    try:
+        result = create_cluster_from_faces(
+            db=db,
+            face_ids=request.face_ids,
+            cluster_name=request.destination_cluster_name,
+            source_cluster_id=request.source_cluster_id,
+        )
+        db.commit()
+    except ValueError as exc:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    return ClusterMutationResponse(
+        status="split",
+        affected_cluster_ids=result.affected_cluster_ids,
+        moved_face_count=result.moved_face_count,
+    )
+
+
+@router.post("/people/create-from-faces", response_model=ClusterMutationResponse)
+def create_person_cluster_from_faces(
+    request: CreateClusterFromFacesRequest,
+    db: Session = Depends(get_db),
+) -> ClusterMutationResponse:
+    try:
+        result = create_cluster_from_faces(
+            db=db,
+            face_ids=request.face_ids,
+            cluster_name=request.cluster_name,
+        )
+        db.commit()
+    except ValueError as exc:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    return ClusterMutationResponse(
+        status="created",
+        affected_cluster_ids=result.affected_cluster_ids,
+        moved_face_count=result.moved_face_count,
+    )
 
 
 @router.get("/people/{cluster_id}/images", response_model=ClusterImageListResponse)
