@@ -7,17 +7,23 @@ from app.db.models import Base
 from app.db.session import engine
 
 
-def _apply_compat_migrations() -> None:
-    """Apply small backward-compatible schema fixes for existing databases."""
+def _ensure_column(table_name: str, column_name: str, ddl_type: str) -> None:
     inspector = inspect(engine)
-
-    if "person_cluster" not in inspector.get_table_names():
+    if table_name not in inspector.get_table_names():
         return
 
-    cluster_columns = {column["name"] for column in inspector.get_columns("person_cluster")}
-    if "cover_face_id" not in cluster_columns:
-        with engine.begin() as connection:
-            connection.execute(text("ALTER TABLE person_cluster ADD COLUMN cover_face_id INTEGER"))
+    existing_columns = {column["name"] for column in inspector.get_columns(table_name)}
+    if column_name in existing_columns:
+        return
+
+    with engine.begin() as connection:
+        connection.execute(text(f"ALTER TABLE {table_name} ADD COLUMN {column_name} {ddl_type}"))
+
+
+def _apply_compat_migrations() -> None:
+    """Apply small backward-compatible schema fixes for existing databases."""
+    _ensure_column("person_cluster", "cover_face_id", "INTEGER")
+    _ensure_column("face", "person_cluster_id", "INTEGER")
 
 
 def init_db() -> None:

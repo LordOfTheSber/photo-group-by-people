@@ -21,7 +21,7 @@ pip install -r requirements-ml.txt
 
 ## Schema updates
 
-The app applies lightweight backward-compatible startup migrations (for example, adding missing `person_cluster.cover_face_id` in older databases).
+The app applies lightweight backward-compatible startup migrations (for example, adding missing `person_cluster.cover_face_id` and `face.person_cluster_id` in older databases).
 
 ## PostgreSQL
 
