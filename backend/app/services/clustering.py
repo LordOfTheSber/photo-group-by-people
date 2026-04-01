@@ -95,8 +95,8 @@ def run_face_clustering_job(job_id: int, eps: float = DEFAULT_DBSCAN_EPS, min_sa
         db.commit()
 
         if not faces_with_embeddings:
-            job.status = "completed"
-            job.message = "No face embeddings found for clustering"
+            job.status = "failed"
+            job.message = "No face embeddings found. Run face detection and face embedding first."
             db.commit()
             return
 

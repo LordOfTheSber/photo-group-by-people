@@ -133,6 +133,17 @@ function ProgressPage() {
     }
   }
 
+  const runFullPipeline = async () => {
+    try {
+      await api('/faces/detect', { method: 'POST' })
+      await api('/faces/embed', { method: 'POST' })
+      await api('/faces/cluster', { method: 'POST' })
+      await load()
+    } catch (e) {
+      setError((e as Error).message)
+    }
+  }
+
   useEffect(() => {
     load()
     const timer = setInterval(load, 5000)
@@ -143,7 +154,8 @@ function ProgressPage() {
     <section>
       <h2>Processing progress</h2>
       <div style={{ marginBottom: 12 }}>
-        <button onClick={() => trigger('/faces/detect')}>Run face detection</button>
+        <button onClick={runFullPipeline}>Run full pipeline</button>
+        <button onClick={() => trigger('/faces/detect')} style={{ marginLeft: 8 }}>Run face detection</button>
         <button onClick={() => trigger('/faces/embed')} style={{ marginLeft: 8 }}>
           Run embeddings
         </button>
@@ -157,6 +169,7 @@ function ProgressPage() {
         {jobs.map((job) => (
           <li key={job.id}>
             #{job.id} {job.job_type} — <strong>{job.status}</strong> ({job.processed_items}/{job.total_items})
+            {job.message ? <div style={{ color: '#555', fontSize: 12 }}>{job.message}</div> : null}
           </li>
         ))}
       </ul>

@@ -130,6 +130,15 @@ def run_face_embedding_job(job_id: int) -> None:
         face_recognition = _ensure_face_recognition()
 
         faces = db.query(Face).order_by(Face.id.asc()).all()
+        if not faces:
+            job.status = "failed"
+            job.total_items = 0
+            job.processed_items = 0
+            job.error_count = 0
+            job.message = "No faces found. Run face detection first."
+            db.commit()
+            return
+
         job.status = "running"
         job.total_items = len(faces)
         job.processed_items = 0
