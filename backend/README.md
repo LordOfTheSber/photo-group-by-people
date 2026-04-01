@@ -19,6 +19,10 @@ pip install -r requirements-ml.txt
 
 > On Windows, `face-recognition` depends on `dlib` and may require Visual Studio C++ build tools.
 
+## Schema updates
+
+The app applies lightweight backward-compatible startup migrations (for example, adding missing `person_cluster.cover_face_id` in older databases).
+
 ## PostgreSQL
 
 1. Create a database, for example `face_photo_sorter`.
