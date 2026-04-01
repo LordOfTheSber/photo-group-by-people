@@ -1,10 +1,14 @@
 from pathlib import Path
+from threading import Lock
 
 from sqlalchemy import inspect, text
 
 from app.core.config import get_settings
 from app.db.models import Base
 from app.db.session import engine
+
+_COMPAT_DONE = False
+_COMPAT_LOCK = Lock()
 
 
 def _ensure_column(table_name: str, column_name: str, ddl_type: str) -> None:
@@ -26,8 +30,20 @@ def _apply_compat_migrations() -> None:
     _ensure_column("face", "person_cluster_id", "INTEGER")
 
 
+def ensure_compat_schema() -> None:
+    global _COMPAT_DONE
+    if _COMPAT_DONE:
+        return
+
+    with _COMPAT_LOCK:
+        if _COMPAT_DONE:
+            return
+        _apply_compat_migrations()
+        _COMPAT_DONE = True
+
+
 def init_db() -> None:
     settings = get_settings()
     Path(settings.data_dir).mkdir(parents=True, exist_ok=True)
     Base.metadata.create_all(bind=engine)
-    _apply_compat_migrations()
+    ensure_compat_schema()
