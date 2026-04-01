@@ -49,7 +49,7 @@ def list_person_clusters(
     limit: int = Query(default=100, ge=1),
     offset: int = Query(default=0, ge=0),
     search: str | None = Query(default=None),
-    sort_by: str = Query(default="name"),
+    sort_by: str = Query(default="id"),
     sort_dir: str = Query(default="asc"),
     db: Session = Depends(get_db),
 ) -> PersonClusterListResponse:

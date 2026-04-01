@@ -238,8 +238,6 @@ function PeoplePage() {
       const params = new URLSearchParams({
         limit: String(PEOPLE_PAGE_SIZE),
         offset: String(offset),
-        sort_by: 'name',
-        sort_dir: 'asc',
       })
       if (debouncedSearch.trim()) params.set('search', debouncedSearch.trim())
       const res = await api<{ items: PersonCluster[]; total: number }>(`/people?${params.toString()}`)
@@ -278,9 +276,6 @@ function PeoplePage() {
           placeholder="Search by cluster name prefix"
           style={{ width: 280, marginRight: 8 }}
         />
-        <span style={{ fontSize: 13, color: '#555' }}>
-          Sorted by name (A→Z)
-        </span>
       </div>
       <div style={{ marginBottom: 12 }}>
         <button onClick={() => setOffset((prev) => Math.max(0, prev - PEOPLE_PAGE_SIZE))} disabled={!canPrev}>
@@ -320,10 +315,10 @@ function PersonDetailPage({ clusterId }: { clusterId: number }) {
   const [destinationName, setDestinationName] = useState('')
   const [mergeTargetId, setMergeTargetId] = useState('')
   const [mergeClusters, setMergeClusters] = useState<PersonCluster[]>([])
-  const [mergeTotal, setMergeTotal] = useState(0)
-  const [mergeOffset, setMergeOffset] = useState(0)
   const [mergeSearchInput, setMergeSearchInput] = useState('')
-  const debouncedMergeSearch = useDebouncedValue(mergeSearchInput, 300)
+  const debouncedMergeSearch = useDebouncedValue(mergeSearchInput, 1000)
+  const [mergeDropdownOpen, setMergeDropdownOpen] = useState(false)
+  const [selectedMergeCluster, setSelectedMergeCluster] = useState<PersonCluster | null>(null)
   const [mutationMessage, setMutationMessage] = useState('')
 
   const load = async () => {
@@ -346,31 +341,30 @@ function PersonDetailPage({ clusterId }: { clusterId: number }) {
   }, [clusterId])
 
   const loadMergeCandidates = async () => {
+    const searchValue = debouncedMergeSearch.trim()
+    if (!searchValue) {
+      setMergeClusters([])
+      setMergeDropdownOpen(false)
+      return
+    }
+
     try {
       const params = new URLSearchParams({
         limit: String(PEOPLE_PAGE_SIZE),
-        offset: String(mergeOffset),
-        sort_by: 'name',
-        sort_dir: 'asc',
+        offset: '0',
       })
-      if (debouncedMergeSearch.trim()) params.set('search', debouncedMergeSearch.trim())
+      params.set('search', searchValue)
       const res = await api<{ items: PersonCluster[]; total: number }>(`/people?${params.toString()}`)
       setMergeClusters(res.items.filter((cluster) => cluster.id !== clusterId))
-      setMergeTotal(Math.max(0, res.total - 1))
+      setMergeDropdownOpen(true)
     } catch {
       // Keep the main page working even if merge candidate loading fails.
     }
   }
 
   useEffect(() => {
-    setMergeOffset(0)
-  }, [debouncedMergeSearch, clusterId])
-
-  useEffect(() => {
     loadMergeCandidates()
-    const timer = setInterval(loadMergeCandidates, PEOPLE_POLL_INTERVAL_MS)
-    return () => clearInterval(timer)
-  }, [clusterId, mergeOffset, debouncedMergeSearch])
+  }, [clusterId, debouncedMergeSearch])
 
   const rename = async () => {
     try {
@@ -427,7 +421,7 @@ function PersonDetailPage({ clusterId }: { clusterId: number }) {
   }
 
   const mergeIntoTarget = async () => {
-    const target = Number(mergeTargetId)
+    const target = Number(mergeTargetId || selectedMergeCluster?.id)
     if (!target) return
     try {
       const result = await api<ClusterMutationResponse>('/people/merge', {
@@ -473,34 +467,34 @@ function PersonDetailPage({ clusterId }: { clusterId: number }) {
       <div style={{ marginBottom: 16 }}>
         <input
           value={mergeSearchInput}
-          onChange={(e) => setMergeSearchInput(e.target.value)}
+          onChange={(e) => {
+            setMergeSearchInput(e.target.value)
+            setMergeTargetId('')
+            setSelectedMergeCluster(null)
+          }}
           placeholder="Search merge target (prefix)"
           style={{ width: 220, marginRight: 8 }}
         />
-        <select value={mergeTargetId} onChange={(e) => setMergeTargetId(e.target.value)}>
-          <option value="">Merge current into...</option>
-          {mergeClusters.map((cluster) => (
-            <option key={cluster.id} value={cluster.id}>
-              {cluster.id} — {cluster.name}
-            </option>
-          ))}
-        </select>
+        {mergeDropdownOpen && mergeClusters.length > 0 && (
+          <select
+            value={mergeTargetId}
+            onChange={(e) => {
+              const value = e.target.value
+              setMergeTargetId(value)
+              const picked = mergeClusters.find((cluster) => String(cluster.id) === value) ?? null
+              setSelectedMergeCluster(picked)
+            }}
+          >
+            <option value="">Choose target cluster...</option>
+            {mergeClusters.map((cluster) => (
+              <option key={cluster.id} value={cluster.id}>
+                {cluster.id} — {cluster.name}
+              </option>
+            ))}
+          </select>
+        )}
         <button onClick={mergeIntoTarget} disabled={!mergeTargetId} style={{ marginLeft: 8 }}>
           Merge cluster
-        </button>
-        <button
-          onClick={() => setMergeOffset((prev) => Math.max(0, prev - PEOPLE_PAGE_SIZE))}
-          disabled={mergeOffset === 0}
-          style={{ marginLeft: 8 }}
-        >
-          Prev
-        </button>
-        <button
-          onClick={() => setMergeOffset((prev) => prev + PEOPLE_PAGE_SIZE)}
-          disabled={mergeOffset + PEOPLE_PAGE_SIZE >= mergeTotal}
-          style={{ marginLeft: 8 }}
-        >
-          Next
         </button>
       </div>
       {mutationMessage && <p style={{ color: 'green' }}>{mutationMessage}</p>}
