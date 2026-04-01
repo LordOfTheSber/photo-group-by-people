@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
+from typing import Any
 
-import numpy as np
 from PIL import Image as PILImage, ImageOps
 from sqlalchemy.orm import Session
 
@@ -12,12 +12,22 @@ from app.db.session import SessionLocal
 THUMBNAIL_SIZE = (224, 224)
 
 
-def _ensure_face_recognition():
+def _ensure_numpy() -> Any:
+    try:
+        import numpy as np  # type: ignore
+    except Exception as exc:  # pragma: no cover - depends on local runtime
+        raise RuntimeError(
+            "numpy is required for face embedding. Install optional ML dependencies first."
+        ) from exc
+    return np
+
+
+def _ensure_face_recognition() -> Any:
     try:
         import face_recognition  # type: ignore
     except Exception as exc:  # pragma: no cover - depends on local runtime
         raise RuntimeError(
-            "face_recognition is required for face detection/embedding. Install backend requirements first."
+            "face_recognition is required for face detection/embedding. Install optional ML dependencies first."
         ) from exc
     return face_recognition
 
@@ -27,6 +37,23 @@ def _thumbnail_output_path(face_id: int) -> Path:
     out_dir = Path(settings.data_dir) / "faces" / "thumbnails"
     out_dir.mkdir(parents=True, exist_ok=True)
     return out_dir / f"face_{face_id}.jpg"
+
+
+
+
+def _parse_face_location(bbox_json: str | None) -> tuple[int, int, int, int] | None:
+    if not bbox_json:
+        return None
+
+    try:
+        raw = json.loads(bbox_json)
+        top = int(raw["top"])
+        right = int(raw["right"])
+        bottom = int(raw["bottom"])
+        left = int(raw["left"])
+        return (top, right, bottom, left)
+    except Exception:
+        return None
 
 
 def _embedding_output_path(face_id: int) -> Path:
@@ -111,6 +138,8 @@ def run_face_detection_job(job_id: int) -> None:
 def run_face_embedding_job(job_id: int) -> None:
     db: Session = SessionLocal()
     try:
+        np = _ensure_numpy()
+
         job = db.get(Job, job_id)
         if not job:
             return
@@ -118,6 +147,15 @@ def run_face_embedding_job(job_id: int) -> None:
         face_recognition = _ensure_face_recognition()
 
         faces = db.query(Face).order_by(Face.id.asc()).all()
+        if not faces:
+            job.status = "failed"
+            job.total_items = 0
+            job.processed_items = 0
+            job.error_count = 0
+            job.message = "No faces found. Run face detection first."
+            db.commit()
+            return
+
         job.status = "running"
         job.total_items = len(faces)
         job.processed_items = 0
@@ -128,11 +166,20 @@ def run_face_embedding_job(job_id: int) -> None:
         for face in faces:
             job.processed_items += 1
             try:
-                if not face.thumbnail_path:
-                    raise RuntimeError(f"Face {face.id} has no thumbnail_path")
+                location = _parse_face_location(face.bbox_json)
+                encodings: list[Any] = []
 
-                image_data = face_recognition.load_image_file(face.thumbnail_path)
-                encodings = face_recognition.face_encodings(image_data)
+                if location and face.image and face.image.file_path:
+                    source_image_data = face_recognition.load_image_file(face.image.file_path)
+                    encodings = face_recognition.face_encodings(source_image_data, known_face_locations=[location])
+
+                if not encodings:
+                    if not face.thumbnail_path:
+                        raise RuntimeError(f"Face {face.id} has no thumbnail_path")
+
+                    thumb_image_data = face_recognition.load_image_file(face.thumbnail_path)
+                    encodings = face_recognition.face_encodings(thumb_image_data)
+
                 if not encodings:
                     raise RuntimeError(f"No embedding generated for face {face.id}")
 

@@ -10,6 +10,10 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 def get_db() -> Session:
+    from app.db.init_db import ensure_compat_schema
+
+    ensure_compat_schema()
+
     db = SessionLocal()
     try:
         yield db
