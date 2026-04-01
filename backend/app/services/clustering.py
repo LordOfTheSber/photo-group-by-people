@@ -1,16 +1,31 @@
 from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
-import numpy as np
 from sqlalchemy.orm import Session
 
 from app.db.models import Face, Job, PersonCluster, PersonImage
 from app.db.session import SessionLocal
 
+if TYPE_CHECKING:
+    import numpy as np
+
 DEFAULT_DBSCAN_EPS = 0.48
 DEFAULT_DBSCAN_MIN_SAMPLES = 2
 
 
-def _dbscan(embeddings: np.ndarray, eps: float, min_samples: int) -> np.ndarray:
+def _ensure_numpy() -> Any:
+    try:
+        import numpy as np  # type: ignore
+    except Exception as exc:  # pragma: no cover - depends on local runtime
+        raise RuntimeError(
+            "numpy is required for face clustering. Install optional ML dependencies first."
+        ) from exc
+    return np
+
+
+def _dbscan(embeddings: "np.ndarray", eps: float, min_samples: int) -> "np.ndarray":
+    np = _ensure_numpy()
+
     n_samples = embeddings.shape[0]
     labels = np.full(n_samples, -1, dtype=int)
     visited = np.zeros(n_samples, dtype=bool)
@@ -51,11 +66,13 @@ def _dbscan(embeddings: np.ndarray, eps: float, min_samples: int) -> np.ndarray:
 def run_face_clustering_job(job_id: int, eps: float = DEFAULT_DBSCAN_EPS, min_samples: int = DEFAULT_DBSCAN_MIN_SAMPLES) -> None:
     db: Session = SessionLocal()
     try:
+        np = _ensure_numpy()
+
         job = db.get(Job, job_id)
         if not job:
             return
 
-        faces_with_embeddings: list[tuple[Face, np.ndarray]] = []
+        faces_with_embeddings: list[tuple[Face, "np.ndarray"]] = []
         for face in db.query(Face).order_by(Face.id.asc()).all():
             if not face.embedding_path:
                 continue

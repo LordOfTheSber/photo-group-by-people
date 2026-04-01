@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
+from typing import Any
 
-import numpy as np
 from PIL import Image as PILImage, ImageOps
 from sqlalchemy.orm import Session
 
@@ -12,12 +12,22 @@ from app.db.session import SessionLocal
 THUMBNAIL_SIZE = (224, 224)
 
 
-def _ensure_face_recognition():
+def _ensure_numpy() -> Any:
+    try:
+        import numpy as np  # type: ignore
+    except Exception as exc:  # pragma: no cover - depends on local runtime
+        raise RuntimeError(
+            "numpy is required for face embedding. Install optional ML dependencies first."
+        ) from exc
+    return np
+
+
+def _ensure_face_recognition() -> Any:
     try:
         import face_recognition  # type: ignore
     except Exception as exc:  # pragma: no cover - depends on local runtime
         raise RuntimeError(
-            "face_recognition is required for face detection/embedding. Install backend requirements first."
+            "face_recognition is required for face detection/embedding. Install optional ML dependencies first."
         ) from exc
     return face_recognition
 
@@ -111,6 +121,8 @@ def run_face_detection_job(job_id: int) -> None:
 def run_face_embedding_job(job_id: int) -> None:
     db: Session = SessionLocal()
     try:
+        np = _ensure_numpy()
+
         job = db.get(Job, job_id)
         if not job:
             return

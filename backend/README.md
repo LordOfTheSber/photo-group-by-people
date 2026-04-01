@@ -9,6 +9,16 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
+## Optional ML dependencies
+
+Face detection/embedding/clustering jobs need additional ML packages:
+
+```bash
+pip install -r requirements-ml.txt
+```
+
+> On Windows, `face-recognition` depends on `dlib` and may require Visual Studio C++ build tools.
+
 ## PostgreSQL
 
 1. Create a database, for example `face_photo_sorter`.
