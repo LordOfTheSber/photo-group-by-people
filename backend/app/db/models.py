@@ -28,22 +28,31 @@ class Face(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     image_id: Mapped[int] = mapped_column(ForeignKey("image.id", ondelete="CASCADE"), index=True)
+    person_cluster_id: Mapped[int | None] = mapped_column(
+        ForeignKey("person_cluster.id", ondelete="SET NULL"),
+        index=True,
+        nullable=True,
+    )
     bbox_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     embedding_path: Mapped[str | None] = mapped_column(String(1024), nullable=True)
     thumbnail_path: Mapped[str | None] = mapped_column(String(1024), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), nullable=False)
 
     image: Mapped[Image] = relationship(back_populates="faces")
+    cluster: Mapped["PersonCluster | None"] = relationship(back_populates="faces", foreign_keys=[person_cluster_id])
 
 
 class PersonCluster(Base):
     __tablename__ = "person_cluster"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    cover_face_id: Mapped[int | None] = mapped_column(ForeignKey("face.id", ondelete="SET NULL"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), nullable=False)
 
+    faces: Mapped[list[Face]] = relationship(back_populates="cluster", foreign_keys=[Face.person_cluster_id])
     images: Mapped[list["PersonImage"]] = relationship(back_populates="cluster")
+    cover_face: Mapped[Face | None] = relationship(foreign_keys=[cover_face_id], post_update=True)
 
 
 class PersonImage(Base):
@@ -56,6 +65,7 @@ class PersonImage(Base):
     confidence: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     cluster: Mapped[PersonCluster] = relationship(back_populates="images")
+    image: Mapped[Image] = relationship()
 
 
 class Job(Base):
