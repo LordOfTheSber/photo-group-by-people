@@ -1,64 +1,76 @@
 import React, { createContext, useContext, useMemo, useReducer } from 'react'
-import { clusters, faces, images, session } from '../../shared/api/mock-data'
-import type { Cluster, ClusteringSession, Face, FaceImage, FiltersState, UserAction } from '../../shared/types/domain'
+import type { FiltersState, Job, PersonCluster, PersonDetail, ProcessingSummary } from '../../shared/types/domain'
 
 type RootState = {
-  clusters: Cluster[]
-  faces: Face[]
-  images: FaceImage[]
-  session: ClusteringSession
-  filters: FiltersState
-  selectedFaceIds: number[]
+  summary: ProcessingSummary | null
+  jobs: Job[]
+  clusters: PersonCluster[]
+  clustersTotal: number
   activeClusterId: number | null
+  activeClusterDetail: PersonDetail | null
+  loading: boolean
+  error: string
+  selectedFaceIds: number[]
   previewFaceId: number | null
-  actions: UserAction[]
+  filters: FiltersState
   themeMode: 'light' | 'dark'
 }
 
 type Action =
-  | { type: 'set_search'; payload: string }
-  | { type: 'set_attention'; payload: Array<'high' | 'medium' | 'low'> }
-  | { type: 'set_sort'; payload: FiltersState['sortBy'] }
-  | { type: 'toggle_disputed' }
+  | { type: 'set_loading'; payload: boolean }
+  | { type: 'set_error'; payload: string }
+  | { type: 'set_summary'; payload: ProcessingSummary }
+  | { type: 'set_jobs'; payload: Job[] }
+  | { type: 'set_clusters'; payload: { items: PersonCluster[]; total: number } }
+  | { type: 'set_active_cluster'; payload: number | null }
+  | { type: 'set_cluster_detail'; payload: PersonDetail | null }
   | { type: 'toggle_face'; payload: number }
   | { type: 'clear_selection' }
-  | { type: 'set_cluster'; payload: number | null }
-  | { type: 'set_preview_face'; payload: number | null }
-  | { type: 'rename_cluster'; payload: { id: number; name: string } }
-  | { type: 'merge_clusters'; payload: { sourceId: number; targetId: number } }
-  | { type: 'split_faces'; payload: { sourceId: number; newName: string; faceIds: number[] } }
+  | { type: 'set_search'; payload: string }
+  | { type: 'set_sort'; payload: { sortBy: FiltersState['sortBy']; sortDir: FiltersState['sortDir'] } }
   | { type: 'set_theme'; payload: 'light' | 'dark' }
 
 const initialState: RootState = {
-  clusters,
-  faces,
-  images,
-  session,
+  summary: null,
+  jobs: [],
+  clusters: [],
+  clustersTotal: 0,
+  activeClusterId: null,
+  activeClusterDetail: null,
+  loading: false,
+  error: '',
+  selectedFaceIds: [],
+  previewFaceId: null,
   filters: {
     search: '',
-    attention: ['high', 'medium', 'low'],
-    sortBy: 'attention',
+    sortBy: 'id',
+    sortDir: 'asc',
     showOnlyDisputed: false,
   },
-  selectedFaceIds: [],
-  activeClusterId: 1,
-  previewFaceId: null,
-  actions: [],
   themeMode: 'light',
 }
 
-const pushAction = (state: RootState, action: UserAction): RootState => ({ ...state, actions: [action, ...state.actions].slice(0, 100) })
-
 function reducer(state: RootState, action: Action): RootState {
   switch (action.type) {
-    case 'set_search':
-      return { ...state, filters: { ...state.filters, search: action.payload } }
-    case 'set_attention':
-      return { ...state, filters: { ...state.filters, attention: action.payload } }
-    case 'set_sort':
-      return { ...state, filters: { ...state.filters, sortBy: action.payload } }
-    case 'toggle_disputed':
-      return { ...state, filters: { ...state.filters, showOnlyDisputed: !state.filters.showOnlyDisputed } }
+    case 'set_loading':
+      return { ...state, loading: action.payload }
+    case 'set_error':
+      return { ...state, error: action.payload }
+    case 'set_summary':
+      return { ...state, summary: action.payload }
+    case 'set_jobs':
+      return { ...state, jobs: action.payload }
+    case 'set_clusters':
+      return {
+        ...state,
+        clusters: action.payload.items,
+        clustersTotal: action.payload.total,
+        activeClusterId: state.activeClusterId ?? action.payload.items[0]?.id ?? null,
+      }
+    case 'set_active_cluster':
+      return { ...state, activeClusterId: action.payload, selectedFaceIds: [], previewFaceId: null }
+    case 'set_cluster_detail':
+      return { ...state, activeClusterDetail: action.payload }
     case 'toggle_face':
       return {
         ...state,
@@ -68,59 +80,11 @@ function reducer(state: RootState, action: Action): RootState {
         previewFaceId: action.payload,
       }
     case 'clear_selection':
-      return { ...state, selectedFaceIds: [] }
-    case 'set_cluster':
-      return { ...state, activeClusterId: action.payload, selectedFaceIds: [] }
-    case 'set_preview_face':
-      return { ...state, previewFaceId: action.payload }
-    case 'rename_cluster': {
-      const next = {
-        ...state,
-        clusters: state.clusters.map((cluster) => (cluster.id === action.payload.id ? { ...cluster, name: action.payload.name } : cluster)),
-      }
-      return pushAction(next, { id: crypto.randomUUID(), type: 'rename', createdAt: new Date().toISOString(), meta: { clusterId: action.payload.id } })
-    }
-    case 'merge_clusters': {
-      const source = state.clusters.find((cluster) => cluster.id === action.payload.sourceId)
-      const target = state.clusters.find((cluster) => cluster.id === action.payload.targetId)
-      if (!source || !target || source.id === target.id) return state
-      const nextClusters = state.clusters
-        .filter((cluster) => cluster.id !== source.id)
-        .map((cluster) =>
-          cluster.id === target.id
-            ? { ...cluster, faceIds: [...cluster.faceIds, ...source.faceIds], imageIds: [...new Set([...cluster.imageIds, ...source.imageIds])] }
-            : cluster,
-        )
-      const nextFaces = state.faces.map((face) => (source.faceIds.includes(face.id) ? { ...face, clusterId: target.id } : face))
-      const next = { ...state, clusters: nextClusters, faces: nextFaces, activeClusterId: target.id, selectedFaceIds: [] }
-      return pushAction(next, { id: crypto.randomUUID(), type: 'merge', createdAt: new Date().toISOString(), meta: { sourceId: source.id, targetId: target.id } })
-    }
-    case 'split_faces': {
-      const source = state.clusters.find((cluster) => cluster.id === action.payload.sourceId)
-      if (!source || action.payload.faceIds.length === 0) return state
-      const newClusterId = Math.max(...state.clusters.map((cluster) => cluster.id)) + 1
-      const movingFaceSet = new Set(action.payload.faceIds)
-      const movingFaces = state.faces.filter((face) => movingFaceSet.has(face.id))
-      const nextClusters = state.clusters.map((cluster) =>
-        cluster.id === source.id ? { ...cluster, faceIds: cluster.faceIds.filter((id) => !movingFaceSet.has(id)) } : cluster,
-      )
-      nextClusters.push({
-        id: newClusterId,
-        name: action.payload.newName || `Cluster #${newClusterId}`,
-        faceIds: movingFaces.map((face) => face.id),
-        imageIds: [...new Set(movingFaces.map((face) => face.imageId))],
-        attention: 'medium',
-        updatedAt: new Date().toISOString(),
-      })
-      const nextFaces = state.faces.map((face) => (movingFaceSet.has(face.id) ? { ...face, clusterId: newClusterId } : face))
-      const next = { ...state, clusters: nextClusters, faces: nextFaces, activeClusterId: newClusterId, selectedFaceIds: [] }
-      return pushAction(next, {
-        id: crypto.randomUUID(),
-        type: 'split',
-        createdAt: new Date().toISOString(),
-        meta: { sourceId: source.id, targetId: newClusterId, count: action.payload.faceIds.length },
-      })
-    }
+      return { ...state, selectedFaceIds: [], previewFaceId: null }
+    case 'set_search':
+      return { ...state, filters: { ...state.filters, search: action.payload } }
+    case 'set_sort':
+      return { ...state, filters: { ...state.filters, ...action.payload } }
     case 'set_theme':
       return { ...state, themeMode: action.payload }
     default:

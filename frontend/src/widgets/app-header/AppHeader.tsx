@@ -8,7 +8,9 @@ export const AppHeader = () => {
       <div>
         <h1 style={{ margin: 0, fontSize: 24 }}>Face Clustering Workspace</h1>
         <p style={{ margin: '4px 0 0', color: 'var(--muted)' }}>
-          {state.session.totalClusters} clusters · {state.session.disputedFaces} disputed faces · {state.session.unresolvedClusters} require attention
+          {state.summary
+            ? `${state.summary.cluster_count} clusters · ${state.summary.total_faces} faces · ${state.summary.unclustered_faces} unclustered`
+            : 'Loading processing summary...'}
         </p>
       </div>
       <div style={{ display: 'flex', gap: 8 }}>

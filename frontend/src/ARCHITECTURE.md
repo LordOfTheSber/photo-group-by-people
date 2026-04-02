@@ -79,4 +79,4 @@ Keep local (component state) when:
 2. Value is used by a single component and not needed elsewhere.
 3. It can be recalculated cheaply.
 
-Current implementation uses a reducer-based store provider to keep architecture stable until RTK dependencies are available in the environment.
+Current implementation is backend-first: all main UI flows (list clusters, open cluster details, rename, split, merge, remove face, load summary/jobs) call real REST endpoints from `shared/api/people.ts`.

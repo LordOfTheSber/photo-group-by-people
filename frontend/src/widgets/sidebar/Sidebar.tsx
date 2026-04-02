@@ -1,17 +1,16 @@
 import { useAppStore } from '../../app/providers/store'
-import { selectFilteredClusters } from '../../shared/lib/selectors'
 
 export const Sidebar = () => {
   const { state, dispatch } = useAppStore()
-  const clusters = selectFilteredClusters(state)
 
   return (
     <aside style={{ width: 280, borderRight: '1px solid var(--border)', paddingRight: 12, overflow: 'auto' }}>
-      {clusters.map((cluster) => (
+      <div style={{ color: 'var(--muted)', fontSize: 12, marginBottom: 8 }}>Clusters: {state.clustersTotal}</div>
+      {state.clusters.map((cluster) => (
         <button
           key={cluster.id}
           onClick={() => {
-            dispatch({ type: 'set_cluster', payload: cluster.id })
+            dispatch({ type: 'set_active_cluster', payload: cluster.id })
             window.location.hash = `#/cluster/${cluster.id}`
           }}
           style={{
@@ -25,7 +24,7 @@ export const Sidebar = () => {
           }}
         >
           <div style={{ fontWeight: 600 }}>{cluster.name}</div>
-          <div style={{ color: 'var(--muted)', fontSize: 12 }}>{cluster.faceIds.length} faces · attention: {cluster.attention}</div>
+          <div style={{ color: 'var(--muted)', fontSize: 12 }}>{cluster.face_count} faces · {cluster.image_count} images</div>
         </button>
       ))}
     </aside>

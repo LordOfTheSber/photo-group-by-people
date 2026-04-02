@@ -10,38 +10,29 @@ export const FiltersPanel = () => {
         borderRadius: 14,
         padding: 12,
         display: 'grid',
-        gridTemplateColumns: '2fr 1fr 1fr 1fr',
+        gridTemplateColumns: '3fr 1fr 1fr',
         gap: 10,
       }}
     >
       <input
         value={state.filters.search}
         onChange={(event) => dispatch({ type: 'set_search', payload: event.target.value })}
-        placeholder="Search cluster by name"
+        placeholder="Search clusters by name prefix"
       />
-      <select value={state.filters.sortBy} onChange={(event) => dispatch({ type: 'set_sort', payload: event.target.value as never })}>
-        <option value="attention">Sort: Attention</option>
-        <option value="size">Sort: Cluster size</option>
-        <option value="recent">Sort: Recently updated</option>
-      </select>
-      <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-        <input
-          type="checkbox"
-          checked={state.filters.showOnlyDisputed}
-          onChange={() => dispatch({ type: 'toggle_disputed' })}
-        />
-        Only disputed
-      </label>
       <select
-        value={state.filters.attention.join(',')}
-        onChange={(event) =>
-          dispatch({ type: 'set_attention', payload: event.target.value === 'all' ? ['high', 'medium', 'low'] : [event.target.value as 'high' | 'medium' | 'low'] })
-        }
+        value={state.filters.sortBy}
+        onChange={(event) => dispatch({ type: 'set_sort', payload: { sortBy: event.target.value as 'id' | 'name' | 'created_at', sortDir: state.filters.sortDir } })}
       >
-        <option value="all">Attention: All</option>
-        <option value="high">Attention: High</option>
-        <option value="medium">Attention: Medium</option>
-        <option value="low">Attention: Low</option>
+        <option value="id">Sort: ID</option>
+        <option value="name">Sort: Name</option>
+        <option value="created_at">Sort: Created</option>
+      </select>
+      <select
+        value={state.filters.sortDir}
+        onChange={(event) => dispatch({ type: 'set_sort', payload: { sortBy: state.filters.sortBy, sortDir: event.target.value as 'asc' | 'desc' } })}
+      >
+        <option value="asc">Ascending</option>
+        <option value="desc">Descending</option>
       </select>
     </section>
   )

@@ -1,48 +1,65 @@
-export type Face = {
+export type Job = {
   id: number
-  clusterId: number
-  imageId: number
-  confidence: number
-  thumbnailUrl: string
-  status: 'confirmed' | 'disputed' | 'needs_review'
+  job_type: string
+  status: string
+  total_items: number
+  processed_items: number
+  error_count: number
+  message?: string | null
+  created_at: string
+  updated_at: string
 }
 
-export type FaceImage = {
-  id: number
-  fileName: string
-  previewUrl: string
-  width: number
-  height: number
+export type ProcessingSummary = {
+  total_images: number
+  images_with_faces: number
+  total_faces: number
+  cluster_count: number
+  unclustered_faces: number
+  failed_images: number
+  unresolved_errors: number
 }
 
-export type Cluster = {
+export type PersonCluster = {
   id: number
   name: string
-  faceIds: number[]
-  imageIds: number[]
-  attention: 'high' | 'medium' | 'low'
-  updatedAt: string
+  face_count: number
+  image_count: number
+  cover_face_thumbnail_url?: string | null
+  created_at: string
 }
 
-export type ClusteringSession = {
-  id: string
-  totalClusters: number
-  disputedFaces: number
-  unresolvedClusters: number
-  processedFaces: number
-  startedAt: string
+export type ClusterFace = {
+  id: number
+  image_id: number
+  thumbnail_url?: string | null
+  bbox_json?: string | null
+}
+
+export type ClusterImage = {
+  id: number
+  file_name: string
+  preview_url: string
+}
+
+export type PersonDetail = {
+  id: number
+  name: string
+  created_at: string
+  cover_face_thumbnail_url?: string | null
+  faces: ClusterFace[]
+  images: ClusterImage[]
+}
+
+export type ClusterMutationResponse = {
+  status: string
+  affected_cluster_ids: number[]
+  moved_face_count: number
 }
 
 export type FiltersState = {
   search: string
-  attention: Array<'high' | 'medium' | 'low'>
-  sortBy: 'size' | 'recent' | 'attention'
+  sortBy: 'id' | 'name' | 'created_at'
+  sortDir: 'asc' | 'desc'
   showOnlyDisputed: boolean
-}
-
-export type UserAction = {
-  id: string
-  type: 'merge' | 'split' | 'rename' | 'approve' | 'reject' | 'export'
-  createdAt: string
-  meta: Record<string, string | number>
 }
