@@ -34,7 +34,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 }
 
 .surface {
-  background: color-mix(in srgb, var(--surface) 90%, white 10%);
+  background: var(--surfaceElevated, var(--surface));
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-1);
@@ -59,3 +59,6 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   .stats-grid { grid-template-columns: repeat(2, minmax(120px, 1fr)); }
   .bento-grid { grid-template-columns: 1fr; }
 }
+
+
+h1, h2, h3, p, span, div, label { color: inherit; }

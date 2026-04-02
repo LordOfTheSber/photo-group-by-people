@@ -11,6 +11,7 @@ const Shell = () => {
       style={{
         ['--bg' as string]: isDark ? '#10131A' : '#F5F7FB',
         ['--surface' as string]: isDark ? '#171C26' : '#FFFFFF',
+        ['--surfaceElevated' as string]: isDark ? '#1D2534' : '#FFFFFF',
         ['--surfaceSubtle' as string]: isDark ? '#1E2533' : '#F8FAFD',
         ['--border' as string]: isDark ? '#2B3343' : '#E4EAF2',
         ['--text' as string]: isDark ? '#F2F5FA' : '#111827',

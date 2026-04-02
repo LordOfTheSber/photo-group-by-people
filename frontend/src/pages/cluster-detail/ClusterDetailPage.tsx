@@ -1,3 +1,4 @@
+import { Button } from 'antd'
 import { useCallback, useEffect } from 'react'
 import { useAppStore } from '../../app/providers/store'
 import { getClusterDetail, getClusters } from '../../shared/api/people'
@@ -29,9 +30,9 @@ export const ClusterDetailPage = ({ clusterId }: { clusterId: number }) => {
 
   return (
     <main className="app-shell">
-      <button onClick={() => (window.location.hash = '#/dashboard')} style={{ marginBottom: 12 }}>
+      <Button onClick={() => (window.location.hash = '#/dashboard')} style={{ marginBottom: 12 }}>
         ← Back to overview
-      </button>
+      </Button>
       <section className="bento-grid" style={{ gridTemplateColumns: 'minmax(0, 1fr) 320px' }}>
         <div className="surface" style={{ padding: 12 }}>
           <ClustersWorkspace reloadClusters={reloadClusters} reloadClusterDetail={reloadClusterDetail} />

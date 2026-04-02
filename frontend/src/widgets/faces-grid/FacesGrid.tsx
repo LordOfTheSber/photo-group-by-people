@@ -16,8 +16,8 @@ export const FacesGrid = ({ onRemoveFace }: { onRemoveFace: (faceId: number) => 
           className="card-hover"
           style={{ padding: 6, borderColor: state.selectedFaceIds.includes(face.id) ? 'var(--primary)' : 'var(--border)' }}
         >
-          <button
-            style={{ width: '100%', border: 'none', background: 'transparent', padding: 0 }}
+          <Button
+            style={{ width: '100%', border: 'none', background: 'transparent', padding: 0, boxShadow: 'none' }}
             onClick={() => dispatch({ type: 'toggle_face', payload: face.id })}
             aria-label={`Select face ${face.id}`}
           >
@@ -30,7 +30,7 @@ export const FacesGrid = ({ onRemoveFace }: { onRemoveFace: (faceId: number) => 
             ) : (
               <div style={{ width: '100%', aspectRatio: '1/1', borderRadius: 10, background: 'var(--surfaceSubtle)' }} />
             )}
-          </button>
+          </Button>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 6 }}>
             <Typography.Text style={{ fontSize: 12 }}>#{face.id}</Typography.Text>
             <Button onClick={() => onRemoveFace(face.id)}>Remove</Button>
