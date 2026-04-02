@@ -15,7 +15,13 @@
     "types": [
       "vite/client"
     ],
-    "noEmit": true
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "antd": [
+        "src/shared/ui/antd.tsx"
+      ]
+    }
   },
   "include": [
     "src"

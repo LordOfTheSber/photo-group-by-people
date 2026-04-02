@@ -1,10 +1,11 @@
+import { Card, Space, Typography } from 'antd'
 import { useAppStore } from '../../app/providers/store'
 
-const Stat = ({ label, value }: { label: string; value: number | string }) => (
-  <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: 12 }}>
-    <div style={{ color: 'var(--muted)', fontSize: 12 }}>{label}</div>
-    <div style={{ fontWeight: 700, fontSize: 24 }}>{value}</div>
-  </div>
+const StatCard = ({ label, value }: { label: string; value: number | string }) => (
+  <Card style={{ minWidth: 180 }}>
+    <Typography.Text style={{ color: 'var(--muted)' }}>{label}</Typography.Text>
+    <Typography.Title style={{ fontSize: 24 }}>{value}</Typography.Title>
+  </Card>
 )
 
 export const StatisticsSummary = () => {
@@ -12,11 +13,11 @@ export const StatisticsSummary = () => {
   const summary = state.summary
 
   return (
-    <section style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(120px, 1fr))', gap: 12 }}>
-      <Stat label="Clusters" value={summary?.cluster_count ?? '—'} />
-      <Stat label="Faces" value={summary?.total_faces ?? '—'} />
-      <Stat label="Unclustered" value={summary?.unclustered_faces ?? '—'} />
-      <Stat label="Failed images" value={summary?.failed_images ?? '—'} />
-    </section>
+    <Space>
+      <StatCard label="Clusters" value={summary?.cluster_count ?? '—'} />
+      <StatCard label="Faces" value={summary?.total_faces ?? '—'} />
+      <StatCard label="Unclustered" value={summary?.unclustered_faces ?? '—'} />
+      <StatCard label="Failed images" value={summary?.failed_images ?? '—'} />
+    </Space>
   )
 }

@@ -11,6 +11,8 @@ src/
   processes/        # reserved for cross-page flows (empty for now)
   pages/
     dashboard/
+    pipeline/
+    clusters/
     cluster-detail/
   widgets/
     app-header/
@@ -47,6 +49,7 @@ src/
     hooks/
     lib/
     types/
+    ui/
 ```
 
 ## Redux slice layout (RTK template)
