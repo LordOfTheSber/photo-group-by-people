@@ -13,8 +13,8 @@
 body {
   margin: 0;
   background:
-    radial-gradient(circle at 5% -10%, rgba(33, 160, 56, 0.16), transparent 35%),
-    radial-gradient(circle at 90% 0%, rgba(0, 180, 90, 0.1), transparent 30%),
+    radial-gradient(circle at 5% -10%, color-mix(in srgb, var(--primary) 24%, transparent), transparent 35%),
+    radial-gradient(circle at 90% 0%, color-mix(in srgb, var(--primaryStrong) 20%, transparent), transparent 30%),
     var(--bg);
   color: var(--text);
 }
@@ -85,7 +85,7 @@ h1, h2, h3, p, span, div, label { color: inherit; }
   gap: 16px;
   padding: 14px;
   border-radius: 18px;
-  background: linear-gradient(180deg, #DFF0FA 0%, #F3FAFF 100%);
+  background: linear-gradient(180deg, var(--heroStart) 0%, var(--heroEnd) 100%);
 }
 .hero-title { font-size: 62px !important; line-height: 1.02; margin-bottom: 10px !important; }
 .search-strip { border-radius: 18px !important; }
@@ -106,3 +106,9 @@ h1, h2, h3, p, span, div, label { color: inherit; }
 
 
 .app-shell > * + * { margin-top: 12px; }
+
+
+.promo-grid { display: grid; grid-template-columns: repeat(4, minmax(180px, 1fr)); gap: 12px; }
+.promo-card { border-radius: 24px; background: var(--cardSoft); overflow: hidden; min-height: 220px; }
+.promo-card img { margin-top: 16px; border-radius: 0; }
+@media (max-width: 1000px) { .promo-grid { grid-template-columns: repeat(2, minmax(160px, 1fr)); } }

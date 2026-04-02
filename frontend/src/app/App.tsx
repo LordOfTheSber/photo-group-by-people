@@ -18,6 +18,9 @@ const Shell = () => {
         ['--muted' as string]: isDark ? '#9EB8A7' : '#5B7463',
         ['--primary' as string]: '#21A038',
         ['--primaryStrong' as string]: '#118C2A',
+        ['--heroStart' as string]: isDark ? '#173224' : '#DFF0FA',
+        ['--heroEnd' as string]: isDark ? '#122A1F' : '#F3FAFF',
+        ['--cardSoft' as string]: isDark ? '#1A3227' : '#F4F6FA',
       }}
     >
       <AppRouter />

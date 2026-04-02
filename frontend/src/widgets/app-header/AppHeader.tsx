@@ -10,7 +10,7 @@ export const AppHeader = () => {
     <Card style={{ marginBottom: 12 }}>
       <Space style={{ justifyContent: 'space-between', width: '100%' }}>
         <div>
-          <span className="brand-chip">SBER STYLE AI</span>
+          <span className="brand-chip">AI STUDIO</span>
           <Typography.Title style={{ fontSize: 20, marginTop: 8 }}>Face Clustering Workspace</Typography.Title>
           <Typography.Text style={{ color: 'var(--muted)', fontSize: 13 }}>
             {state.summary

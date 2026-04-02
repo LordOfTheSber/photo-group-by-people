@@ -6,6 +6,12 @@ import { useI18n } from '../../shared/hooks/useI18n'
 import { AppHeader } from '../../widgets/app-header/AppHeader'
 
 const HERO_IMAGE = 'https://images.unsplash.com/photo-1516724562728-afc824a36e84?auto=format&fit=crop&w=1200&q=80'
+const PROMOS = [
+  { title: 'Быстрая проверка', subtitle: 'до 99% точности', image: 'https://images.unsplash.com/photo-1580983218765-f663bec07b37?auto=format&fit=crop&w=400&q=80' },
+  { title: 'Экономия времени', subtitle: 'массовые действия', image: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=400&q=80' },
+  { title: 'Персональные подборки', subtitle: 'AI рекомендации', image: 'https://images.unsplash.com/photo-1526947425960-945c6e72858f?auto=format&fit=crop&w=400&q=80' },
+  { title: 'Поддержка 24/7', subtitle: 'единый workflow', image: 'https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&w=400&q=80' },
+]
 
 export const DashboardPage = () => {
   const { dispatch, state } = useAppStore()
@@ -40,22 +46,14 @@ export const DashboardPage = () => {
         <Image src={HERO_IMAGE} alt="hero" style={{ width: '100%', maxWidth: 620, borderRadius: 18, boxShadow: 'var(--shadow-2)' }} />
       </section>
 
-      <section className="ai-block" style={{ marginTop: 14 }}>
-        <div style={{ minWidth: 260 }}>
-          <Typography.Title style={{ fontSize: 44 }}>{state.summary?.cluster_count ?? 0}</Typography.Title>
-          <Typography.Title style={{ fontSize: 28 }}>{t.aiTitle}</Typography.Title>
-          <Typography.Text style={{ color: '#1B3C25' }}>{t.aiSub}</Typography.Text>
-        </div>
-
-        <Space style={{ flex: 1, alignItems: 'stretch' }}>
-          {(state.jobs.slice(0, 3)).map((job) => (
-            <Card key={job.id} className="card-hover" style={{ minWidth: 220, background: 'rgba(255,255,255,.86)' }}>
-              <Typography.Text style={{ fontWeight: 700 }}>#{job.id} {job.job_type}</Typography.Text>
-              <Typography.Text style={{ display: 'block', color: 'var(--muted)' }}>{job.status}</Typography.Text>
-              <Typography.Text style={{ fontSize: 12 }}>{job.processed_items}/{job.total_items}</Typography.Text>
-            </Card>
-          ))}
-        </Space>
+      <section className="promo-grid" style={{ marginTop: 14 }}>
+        {PROMOS.map((item) => (
+          <Card key={item.title} className="promo-card">
+            <Typography.Title style={{ fontSize: 22 }}>{item.title}</Typography.Title>
+            <Typography.Text style={{ color: 'var(--muted)' }}>{item.subtitle}</Typography.Text>
+            <Image src={item.image} alt={item.title} style={{ width: '100%', height: 120, objectFit: 'cover' }} />
+          </Card>
+        ))}
       </section>
 
       {state.error && <div style={{ color: 'crimson', marginTop: 12 }}>{state.error}</div>}
