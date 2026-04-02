@@ -14,10 +14,11 @@ class Settings(BaseSettings):
     people_page_size_default: int = 100
     people_page_size_max_soft: int = 500
     scan_max_workers: int = 8
-    face_detection_max_workers: int = 4
-    face_embedding_max_workers: int = 4
+    face_detection_max_workers: int = 1
+    face_embedding_max_workers: int = 1
     clustering_load_max_workers: int = 8
     export_max_workers: int = 16
+    job_runner_max_workers: int = 2
 
     @field_validator("cors_origins", mode="before")
     @classmethod

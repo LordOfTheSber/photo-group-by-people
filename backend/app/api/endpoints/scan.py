@@ -1,19 +1,20 @@
 from pathlib import Path
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.db.models import Job
 from app.db.session import get_db
 from app.schemas.jobs import JobRead
 from app.schemas.scan import ScanRequest, ScanStartResponse
+from app.services.job_runner import submit_job
 from app.services.scanner import run_scan_job
 
 router = APIRouter(prefix="/scan", tags=["scan"])
 
 
 @router.post("", response_model=ScanStartResponse)
-def start_scan(request: ScanRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db)) -> ScanStartResponse:
+def start_scan(request: ScanRequest, db: Session = Depends(get_db)) -> ScanStartResponse:
     folder = Path(request.folder_path)
     if not folder.exists() or not folder.is_dir():
         raise HTTPException(status_code=400, detail="folder_path must point to an existing directory")
@@ -23,7 +24,7 @@ def start_scan(request: ScanRequest, background_tasks: BackgroundTasks, db: Sess
     db.commit()
     db.refresh(job)
 
-    background_tasks.add_task(run_scan_job, job.id, request.folder_path)
+    submit_job(run_scan_job, job.id, request.folder_path)
     return ScanStartResponse(job_id=job.id, status=job.status)
 
 
