@@ -1,5 +1,6 @@
 import { Card, Space, Typography } from 'antd'
 import { useAppStore } from '../../app/providers/store'
+import { useI18n } from '../../shared/hooks/useI18n'
 
 const StatCard = ({ label, value }: { label: string; value: number | string }) => (
   <Card style={{ minWidth: 180 }}>
@@ -11,13 +12,14 @@ const StatCard = ({ label, value }: { label: string; value: number | string }) =
 export const StatisticsSummary = () => {
   const { state } = useAppStore()
   const summary = state.summary
+  const t = useI18n()
 
   return (
     <Space>
-      <StatCard label="Clusters" value={summary?.cluster_count ?? '—'} />
-      <StatCard label="Faces" value={summary?.total_faces ?? '—'} />
-      <StatCard label="Unclustered" value={summary?.unclustered_faces ?? '—'} />
-      <StatCard label="Failed images" value={summary?.failed_images ?? '—'} />
+      <StatCard label={t.clustersCount} value={summary?.cluster_count ?? '—'} />
+      <StatCard label={t.facesCount} value={summary?.total_faces ?? '—'} />
+      <StatCard label={t.unclustered} value={summary?.unclustered_faces ?? '—'} />
+      <StatCard label={t.failedImages} value={summary?.failed_images ?? '—'} />
     </Space>
   )
 }

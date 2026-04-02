@@ -14,6 +14,7 @@ type RootState = {
   previewFaceId: number | null
   filters: FiltersState
   themeMode: 'light' | 'dark'
+  language: 'ru' | 'en'
 }
 
 type Action =
@@ -29,6 +30,7 @@ type Action =
   | { type: 'set_search'; payload: string }
   | { type: 'set_sort'; payload: { sortBy: FiltersState['sortBy']; sortDir: FiltersState['sortDir'] } }
   | { type: 'set_theme'; payload: 'light' | 'dark' }
+  | { type: 'set_language'; payload: 'ru' | 'en' }
 
 const initialState: RootState = {
   summary: null,
@@ -48,6 +50,7 @@ const initialState: RootState = {
     showOnlyDisputed: false,
   },
   themeMode: 'light',
+  language: 'ru',
 }
 
 function reducer(state: RootState, action: Action): RootState {
@@ -87,6 +90,8 @@ function reducer(state: RootState, action: Action): RootState {
       return { ...state, filters: { ...state.filters, ...action.payload } }
     case 'set_theme':
       return { ...state, themeMode: action.payload }
+    case 'set_language':
+      return { ...state, language: action.payload }
     default:
       return state
   }
