@@ -22,16 +22,16 @@ export const DashboardPage = () => {
   }, [dispatch])
 
   return (
-    <main style={{ padding: 16, maxWidth: 1280, margin: '0 auto' }}>
+    <main className="app-shell">
       <AppHeader />
       <StatisticsSummary />
-      <Space style={{ marginTop: 12 }}>
-        <Card style={{ width: 360 }}>
+      <Space style={{ marginTop: 12, alignItems: 'stretch' }}>
+        <Card className="card-hover" style={{ width: 360 }}>
           <Typography.Title style={{ fontSize: 18 }}>Pipeline Control</Typography.Title>
           <Typography.Text style={{ color: 'var(--muted)' }}>Run scan/detect/embed/cluster/export from one place.</Typography.Text>
           <div style={{ marginTop: 10 }}><Button onClick={() => (window.location.hash = '#/pipeline')}>Open Pipeline</Button></div>
         </Card>
-        <Card style={{ width: 360 }}>
+        <Card className="card-hover" style={{ width: 360 }}>
           <Typography.Title style={{ fontSize: 18 }}>Cluster Review</Typography.Title>
           <Typography.Text style={{ color: 'var(--muted)' }}>Inspect faces, split/merge clusters and clean noise.</Typography.Text>
           <div style={{ marginTop: 10 }}><Button onClick={() => (window.location.hash = '#/clusters')}>Open Clusters</Button></div>

@@ -28,12 +28,12 @@ export const ClusterDetailPage = ({ clusterId }: { clusterId: number }) => {
   }, [clusterId, dispatch, reloadClusterDetail, reloadClusters])
 
   return (
-    <main style={{ padding: 16, maxWidth: 1400, margin: '0 auto' }}>
+    <main className="app-shell">
       <button onClick={() => (window.location.hash = '#/dashboard')} style={{ marginBottom: 12 }}>
         ← Back to overview
       </button>
-      <section style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 320px', gap: 12 }}>
-        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 12 }}>
+      <section className="bento-grid" style={{ gridTemplateColumns: 'minmax(0, 1fr) 320px' }}>
+        <div className="surface" style={{ padding: 12 }}>
           <ClustersWorkspace reloadClusters={reloadClusters} reloadClusterDetail={reloadClusterDetail} />
         </div>
         <PreviewPanel />

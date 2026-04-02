@@ -30,12 +30,12 @@ export const ClustersPage = () => {
   }, [reloadClusterDetail])
 
   return (
-    <main style={{ padding: 16, maxWidth: 1600, margin: '0 auto' }}>
+    <main className="app-shell">
       <AppHeader />
       <FiltersPanel />
-      <section style={{ display: 'grid', gridTemplateColumns: '280px minmax(0, 1fr) 320px', gap: 12, minHeight: '60vh', marginTop: 12 }}>
+      <section className="bento-grid" style={{ marginTop: 12 }}>
         <Sidebar />
-        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: 12 }}>
+        <div className="surface" style={{ padding: 12 }}>
           <ClustersWorkspace reloadClusters={reloadClusters} reloadClusterDetail={reloadClusterDetail} />
         </div>
         <PreviewPanel />

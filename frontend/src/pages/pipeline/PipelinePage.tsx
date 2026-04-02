@@ -23,7 +23,7 @@ export const PipelinePage = () => {
   }, [dispatch])
 
   return (
-    <main style={{ padding: 16, maxWidth: 1280, margin: '0 auto' }}>
+    <main className="app-shell">
       <AppHeader />
       <StatisticsSummary />
       <ProcessControl reloadClusters={reloadClusters} />
