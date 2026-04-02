@@ -8,7 +8,8 @@ export const AppHeader = () => {
     <Card style={{ marginBottom: 12 }}>
       <Space style={{ justifyContent: 'space-between', width: '100%' }}>
         <div>
-          <Typography.Title style={{ fontSize: 22 }}>Face Clustering Workspace</Typography.Title>
+          <span className="brand-chip">SBER STYLE AI</span>
+          <Typography.Title style={{ fontSize: 22, marginTop: 8 }}>Face Clustering Workspace</Typography.Title>
           <Typography.Text style={{ color: 'var(--muted)' }}>
             {state.summary
               ? `${state.summary.cluster_count} clusters · ${state.summary.total_faces} faces · ${state.summary.unclustered_faces} unclustered`

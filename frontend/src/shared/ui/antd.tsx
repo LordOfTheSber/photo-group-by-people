@@ -27,9 +27,9 @@ export const Button = ({ children, style, ...props }: React.ButtonHTMLAttributes
   <button
     {...props}
     style={{
-      border: '1px solid var(--border)',
-      background: 'var(--surfaceSubtle)',
-      color: 'var(--text)',
+      background: 'linear-gradient(90deg, var(--primary), var(--primaryStrong))',
+      color: '#fff',
+      border: 'none',
       borderRadius: 8,
       padding: '6px 10px',
       ...style,

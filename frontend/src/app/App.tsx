@@ -9,14 +9,15 @@ const Shell = () => {
   return (
     <div
       style={{
-        ['--bg' as string]: isDark ? '#10131A' : '#F5F7FB',
-        ['--surface' as string]: isDark ? '#171C26' : '#FFFFFF',
-        ['--surfaceElevated' as string]: isDark ? '#1D2534' : '#FFFFFF',
-        ['--surfaceSubtle' as string]: isDark ? '#1E2533' : '#F8FAFD',
-        ['--border' as string]: isDark ? '#2B3343' : '#E4EAF2',
-        ['--text' as string]: isDark ? '#F2F5FA' : '#111827',
-        ['--muted' as string]: isDark ? '#9BA6BA' : '#6B7280',
-        ['--primary' as string]: '#4A7BFF',
+        ['--bg' as string]: isDark ? '#0D1A14' : '#F3FAF6',
+        ['--surface' as string]: isDark ? '#13241B' : '#FFFFFF',
+        ['--surfaceElevated' as string]: isDark ? '#1A2F24' : '#FFFFFF',
+        ['--surfaceSubtle' as string]: isDark ? '#20382B' : '#EDF8F1',
+        ['--border' as string]: isDark ? '#2E4A3A' : '#D4E9DA',
+        ['--text' as string]: isDark ? '#ECF7EF' : '#102117',
+        ['--muted' as string]: isDark ? '#9EB8A7' : '#5B7463',
+        ['--primary' as string]: '#21A038',
+        ['--primaryStrong' as string]: '#118C2A',
       }}
     >
       <AppRouter />
