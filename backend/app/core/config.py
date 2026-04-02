@@ -13,6 +13,11 @@ class Settings(BaseSettings):
     cors_origins: list[str] = Field(default=["http://localhost:5173", "http://127.0.0.1:5173"])
     people_page_size_default: int = 100
     people_page_size_max_soft: int = 500
+    scan_max_workers: int = 8
+    face_detection_max_workers: int = 4
+    face_embedding_max_workers: int = 4
+    clustering_load_max_workers: int = 8
+    export_max_workers: int = 16
 
     @field_validator("cors_origins", mode="before")
     @classmethod

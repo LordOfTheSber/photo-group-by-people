@@ -1,11 +1,13 @@
 from pathlib import Path
 import logging
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import TYPE_CHECKING, Any
 
 from sqlalchemy.orm import Session
 
 from app.db.models import Face, Job, PersonCluster, PersonImage
 from app.db.session import SessionLocal
+from app.core.config import get_settings
 from app.services.job_reporting import record_item_error
 
 if TYPE_CHECKING:
@@ -66,24 +68,42 @@ def _dbscan(embeddings: "np.ndarray", eps: float, min_samples: int) -> "np.ndarr
     return labels
 
 
+def _load_embedding(face_id: int, embedding_path: str) -> tuple[int, Any]:
+    np = _ensure_numpy()
+    embedding = np.load(Path(embedding_path))
+    return face_id, embedding.astype(np.float32)
+
+
 def run_face_clustering_job(job_id: int, eps: float = DEFAULT_DBSCAN_EPS, min_samples: int = DEFAULT_DBSCAN_MIN_SAMPLES) -> None:
     db: Session = SessionLocal()
     try:
         np = _ensure_numpy()
+        settings = get_settings()
 
         job = db.get(Job, job_id)
         if not job:
             return
 
+        all_faces = db.query(Face).order_by(Face.id.asc()).all()
+        face_by_id = {face.id: face for face in all_faces}
+        load_inputs = [
+            (face.id, face.embedding_path)
+            for face in all_faces
+            if face.embedding_path and Path(face.embedding_path).exists()
+        ]
+
         faces_with_embeddings: list[tuple[Face, "np.ndarray"]] = []
-        for face in db.query(Face).order_by(Face.id.asc()).all():
-            if not face.embedding_path:
-                continue
-            emb_path = Path(face.embedding_path)
-            if not emb_path.exists():
-                continue
-            embedding = np.load(emb_path)
-            faces_with_embeddings.append((face, embedding.astype(np.float32)))
+        max_workers = max(1, settings.clustering_load_max_workers)
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = {
+                executor.submit(_load_embedding, face_id, emb_path): face_id
+                for face_id, emb_path in load_inputs
+            }
+            for future in as_completed(futures):
+                face_id, embedding = future.result()
+                face = face_by_id.get(face_id)
+                if face:
+                    faces_with_embeddings.append((face, embedding))
 
         job.status = "running"
         job.total_items = len(faces_with_embeddings)
