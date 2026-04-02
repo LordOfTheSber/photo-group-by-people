@@ -80,6 +80,25 @@ class Job(Base):
     message: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
+    item_errors: Mapped[list["JobItemError"]] = relationship(back_populates="job", cascade="all, delete-orphan")
+
+
+class JobItemError(Base):
+    __tablename__ = "job_item_error"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    job_id: Mapped[int] = mapped_column(ForeignKey("job.id", ondelete="CASCADE"), index=True)
+    stage: Mapped[str] = mapped_column(String(64), index=True)
+    image_id: Mapped[int | None] = mapped_column(ForeignKey("image.id", ondelete="SET NULL"), index=True, nullable=True)
+    face_id: Mapped[int | None] = mapped_column(ForeignKey("face.id", ondelete="SET NULL"), index=True, nullable=True)
+    file_path: Mapped[str | None] = mapped_column(String(1024), nullable=True)
+    error_message: Mapped[str] = mapped_column(Text, nullable=False)
+    retry_count: Mapped[int] = mapped_column(Integer, default=0)
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
+
+    job: Mapped[Job] = relationship(back_populates="item_errors")
 
 
 class AuditEvent(Base):

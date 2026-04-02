@@ -20,3 +20,23 @@ class JobRead(BaseModel):
 class JobListResponse(BaseModel):
     items: list[JobRead]
     total: int
+
+
+class ProcessingSummary(BaseModel):
+    total_images: int
+    images_with_faces: int
+    total_faces: int
+    cluster_count: int
+    unclustered_faces: int
+    failed_images: int
+    unresolved_errors: int
+
+
+class RetryFailedItemsRequest(BaseModel):
+    limit: int = 100
+
+
+class RetryFailedItemsResponse(BaseModel):
+    job_id: int
+    retried_items: int
+    remaining_failed_items: int

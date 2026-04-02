@@ -9,6 +9,14 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
+## One-command checks
+
+From repo root:
+
+```bash
+make test
+```
+
 ## Optional ML dependencies
 
 Face detection/embedding/clustering jobs need additional ML packages:
@@ -36,3 +44,8 @@ The app applies lightweight backward-compatible startup migrations (for example,
 - `GET /health` — health check.
 - `POST /scan` — start recursive image ingestion job.
 - `GET /scan/jobs/{job_id}` — get scan job status and counters.
+
+## API additions (Phase 11 + 12)
+
+- `GET /reports/processing-summary` — totals for images/faces/clusters and unresolved failures.
+- `POST /jobs/{job_id}/retry-failed` — retry failed scan items (best effort for other job types).

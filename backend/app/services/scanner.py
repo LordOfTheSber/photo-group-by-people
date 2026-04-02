@@ -1,4 +1,5 @@
 import hashlib
+import logging
 from datetime import datetime
 from pathlib import Path
 from typing import Iterable
@@ -8,8 +9,10 @@ from sqlalchemy.orm import Session
 
 from app.db.models import Image, Job
 from app.db.session import SessionLocal
+from app.services.job_reporting import record_item_error, resolve_item_error
 
 SUPPORTED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".bmp", ".webp", ".tiff", ".tif"}
+logger = logging.getLogger(__name__)
 
 
 def iter_image_files(folder: Path) -> Iterable[Path]:
@@ -46,6 +49,7 @@ def run_scan_job(job_id: int, folder_path: str) -> None:
 
         folder = Path(folder_path)
         files = list(iter_image_files(folder)) if folder.exists() else []
+        logger.info("scan job started: job_id=%s folder=%s files=%s", job_id, folder_path, len(files))
         job.total_items = len(files)
         job.status = "running"
         job.message = None
@@ -58,6 +62,7 @@ def run_scan_job(job_id: int, folder_path: str) -> None:
                 existing_by_hash = db.query(Image).filter(Image.file_hash == file_hash).first()
                 existing_by_path = db.query(Image).filter(Image.file_path == str(file_path.resolve())).first()
                 if existing_by_hash or existing_by_path:
+                    resolve_item_error(db, stage="scan", file_path=str(file_path.resolve()))
                     db.commit()
                     continue
 
@@ -74,14 +79,29 @@ def run_scan_job(job_id: int, folder_path: str) -> None:
                     exif_datetime=exif_datetime,
                 )
                 db.add(db_image)
+                resolve_item_error(db, stage="scan", file_path=str(file_path.resolve()))
                 db.commit()
             except Exception as exc:
                 db.rollback()
                 job.error_count += 1
                 job.message = f"Some files failed to parse. Last error: {exc}"
+                record_item_error(
+                    db,
+                    job_id=job.id,
+                    stage="scan",
+                    file_path=str(file_path.resolve()),
+                    error_message=str(exc),
+                )
+                logger.exception("scan file failed: job_id=%s file=%s", job_id, file_path)
                 db.commit()
 
         job.status = "completed"
+        logger.info(
+            "scan job completed: job_id=%s processed=%s errors=%s",
+            job_id,
+            job.processed_items,
+            job.error_count,
+        )
         db.commit()
     except Exception as exc:
         db.rollback()
