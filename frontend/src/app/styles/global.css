@@ -103,3 +103,6 @@ h1, h2, h3, p, span, div, label { color: inherit; }
   .search-strip > div { flex-wrap: wrap !important; }
   .ai-block { flex-direction: column; }
 }
+
+
+.app-shell > * + * { margin-top: 12px; }

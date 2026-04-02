@@ -31,7 +31,8 @@ export const Button = ({ children, style, ...props }: React.ButtonHTMLAttributes
       color: '#fff',
       border: 'none',
       borderRadius: 8,
-      padding: '5px 8px',
+      padding: '6px 10px',
+      whiteSpace: 'nowrap',
       ...style,
     }}
   >
@@ -45,7 +46,8 @@ export const Input = (props: React.InputHTMLAttributes<HTMLInputElement>) => (
     style={{
       border: '1px solid var(--border)',
       borderRadius: 8,
-      padding: '5px 8px',
+      padding: '6px 10px',
+      whiteSpace: 'nowrap',
       width: '100%',
       background: 'var(--surfaceSubtle)',
       color: 'var(--text)',
@@ -60,7 +62,8 @@ export const Select = ({ children, ...props }: React.SelectHTMLAttributes<HTMLSe
     style={{
       border: '1px solid var(--border)',
       borderRadius: 8,
-      padding: '5px 8px',
+      padding: '6px 10px',
+      whiteSpace: 'nowrap',
       width: '100%',
       background: 'var(--surfaceSubtle)',
       color: 'var(--text)',
@@ -71,7 +74,7 @@ export const Select = ({ children, ...props }: React.SelectHTMLAttributes<HTMLSe
   </select>
 )
 
-export const Space = ({ children, style, ...rest }: BaseProps) => <div {...rest} style={{ display: 'flex', gap: 8, flexWrap: 'wrap', ...style }}>{children}</div>
+export const Space = ({ children, style, ...rest }: BaseProps) => <div {...rest} style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', ...style }}>{children}</div>
 
 export const Typography = {
   Title: ({ children, style, ...rest }: BaseProps) => <h2 {...rest} style={{ margin: 0, color: 'var(--text)', ...style }}>{children}</h2>,

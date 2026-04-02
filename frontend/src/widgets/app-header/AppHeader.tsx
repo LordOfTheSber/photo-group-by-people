@@ -19,7 +19,7 @@ export const AppHeader = () => {
               : t.loadingSummary}
           </Typography.Text>
         </div>
-        <Space>
+        <Space style={{ justifyContent: 'flex-end', maxWidth: 560 }}>
           <Button onClick={() => (window.location.hash = '#/dashboard')}><HomeIcon /> {t.overview}</Button>
           <Button onClick={() => (window.location.hash = '#/pipeline')}><PipelineIcon /> {t.pipeline}</Button>
           <Button onClick={() => (window.location.hash = '#/clusters')}><ClusterIcon /> {t.clusters}</Button>

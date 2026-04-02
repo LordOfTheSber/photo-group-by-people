@@ -30,9 +30,9 @@ export const ProcessControl = ({ reloadClusters }: Props) => {
   }
 
   return (
-    <Card style={{ marginBottom: 12 }}>
+    <Card style={{ marginBottom: 12, padding: 12 }}>
       <Typography.Title style={{ fontSize: 16 }}>{t.processPipeline}</Typography.Title>
-      <Space style={{ width: '100%' }}>
+      <Space style={{ width: '100%', marginTop: 12 }}>
         <Input value={folderPath} onChange={(event) => setFolderPath(event.target.value)} placeholder="/photos" />
         <Button disabled={!folderPath || busy} onClick={() => runWithRefresh(() => startScan(folderPath))}>{t.scan}</Button>
         <Button disabled={busy} onClick={() => runWithRefresh(runDetect)}>{t.detect}</Button>
@@ -47,9 +47,9 @@ export const ProcessControl = ({ reloadClusters }: Props) => {
         </Select>
         <Button disabled={!exportPath || busy} onClick={() => runWithRefresh(() => startExport(exportPath, exportStrategy))}>{t.export}</Button>
       </Space>
-      <div style={{ maxHeight: 170, overflow: 'auto', borderTop: '1px solid var(--border)', paddingTop: 8, marginTop: 8 }}>
+      <div style={{ maxHeight: 220, overflow: 'auto', borderTop: '1px solid var(--border)', paddingTop: 10, marginTop: 12 }}>
         {state.jobs.map((job) => (
-          <Space key={job.id} style={{ width: '100%', justifyContent: 'space-between', marginBottom: 5 }}>
+          <Space key={job.id} style={{ width: '100%', justifyContent: 'space-between', marginBottom: 8 }}>
             <Typography.Text style={{ fontSize: 12 }}>#{job.id} {job.job_type} · {job.status} ({job.processed_items}/{job.total_items})</Typography.Text>
             <Button disabled={job.error_count === 0 || busy} onClick={() => runWithRefresh(() => retryFailedItems(job.id))}>{t.retryFailed}</Button>
           </Space>

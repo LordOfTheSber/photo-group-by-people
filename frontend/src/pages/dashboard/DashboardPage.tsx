@@ -47,7 +47,7 @@ export const DashboardPage = () => {
           <Typography.Text style={{ color: '#1B3C25' }}>{t.aiSub}</Typography.Text>
         </div>
 
-        <Space style={{ flex: 1 }}>
+        <Space style={{ flex: 1, alignItems: 'stretch' }}>
           {(state.jobs.slice(0, 3)).map((job) => (
             <Card key={job.id} className="card-hover" style={{ minWidth: 220, background: 'rgba(255,255,255,.86)' }}>
               <Typography.Text style={{ fontWeight: 700 }}>#{job.id} {job.job_type}</Typography.Text>
