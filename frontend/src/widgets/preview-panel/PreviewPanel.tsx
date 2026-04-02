@@ -1,4 +1,4 @@
-import { Card, Typography } from 'antd'
+import { Card, Image, Typography } from 'antd'
 import { useAppStore } from '../../app/providers/store'
 import { toAssetUrl } from '../../shared/api/client'
 import { selectPreviewFace } from '../../shared/lib/selectors'
@@ -17,10 +17,10 @@ export const PreviewPanel = () => {
     <aside style={{ borderLeft: '1px solid var(--border)', paddingLeft: 12, width: 320 }}>
       <Card>
         <Typography.Title style={{ fontSize: 18 }}>Preview</Typography.Title>
-        {face.thumbnail_url && <img src={toAssetUrl(face.thumbnail_url)} alt={`Face ${face.id}`} style={{ width: '100%', borderRadius: 12, marginBottom: 10 }} />}
+        {face.thumbnail_url && <Image src={toAssetUrl(face.thumbnail_url)} alt={`Face ${face.id}`} style={{ width: '100%', borderRadius: 12, marginBottom: 10 }} />}
         {image && (
           <>
-            <img src={toAssetUrl(image.preview_url)} alt={image.file_name} style={{ width: '100%', borderRadius: 12 }} />
+            <Image src={toAssetUrl(image.preview_url)} alt={image.file_name} style={{ width: '100%', borderRadius: 12 }} />
             <Typography.Text style={{ marginTop: 6, display: 'block', color: 'var(--muted)', fontSize: 12 }}>{image.file_name}</Typography.Text>
           </>
         )}

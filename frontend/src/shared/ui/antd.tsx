@@ -77,3 +77,6 @@ export const Typography = {
   Title: ({ children, style, ...rest }: BaseProps) => <h2 {...rest} style={{ margin: 0, color: 'var(--text)', ...style }}>{children}</h2>,
   Text: ({ children, style, ...rest }: BaseProps) => <span {...rest} style={{ color: 'var(--text)', ...style }}>{children}</span>,
 }
+
+
+export const Image = (props: React.ImgHTMLAttributes<HTMLImageElement>) => <img {...props} style={{ display: 'block', maxWidth: '100%', ...(props.style ?? {}) }} />

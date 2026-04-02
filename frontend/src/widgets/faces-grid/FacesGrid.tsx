@@ -1,4 +1,4 @@
-import { Button, Card, Typography } from 'antd'
+import { Button, Card, Image, Typography } from 'antd'
 import { useAppStore } from '../../app/providers/store'
 import { selectVisibleFaces } from '../../shared/lib/selectors'
 
@@ -22,7 +22,7 @@ export const FacesGrid = ({ onRemoveFace }: { onRemoveFace: (faceId: number) => 
             aria-label={`Select face ${face.id}`}
           >
             {face.thumbnail_url ? (
-              <img
+              <Image
                 src={face.thumbnail_url.startsWith('http') ? face.thumbnail_url : `${import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'}${face.thumbnail_url}`}
                 alt={`Face ${face.id}`}
                 style={{ width: '100%', aspectRatio: '1/1', objectFit: 'cover', borderRadius: 10 }}
