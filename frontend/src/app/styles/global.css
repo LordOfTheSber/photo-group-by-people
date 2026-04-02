@@ -1,11 +1,35 @@
 :root {
-  color-scheme: light;
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-  line-height: 1.45;
+  --bg: #F3FAF6;
+  --surface: #FFFFFF;
+  --surfaceElevated: #FFFFFF;
+  --surfaceSubtle: #EDF8F1;
+  --border: #D4E9DA;
+  --text: #102117;
+  --muted: #5B7463;
+  --primary: #21A038;
+  --primaryStrong: #118C2A;
+  --heroStart: #DFF0FA;
+  --heroEnd: #F3FAFF;
+  --cardSoft: #F4F6FA;
   --radius-lg: 16px;
   --radius-md: 12px;
   --shadow-1: 0 1px 2px rgba(16, 24, 40, 0.08), 0 8px 24px rgba(16, 24, 40, 0.08);
   --shadow-2: 0 16px 36px rgba(16, 24, 40, 0.16);
+}
+
+:root[data-theme='dark'] {
+  --bg: #0D1A14;
+  --surface: #13241B;
+  --surfaceElevated: #1A2F24;
+  --surfaceSubtle: #20382B;
+  --border: #2E4A3A;
+  --text: #ECF7EF;
+  --muted: #9EB8A7;
+  --primary: #21A038;
+  --primaryStrong: #118C2A;
+  --heroStart: #173224;
+  --heroEnd: #122A1F;
+  --cardSoft: #1A3227;
 }
 
 * { box-sizing: border-box; }
@@ -38,6 +62,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   grid-template-columns: 280px minmax(0, 1fr) 320px;
   gap: 12px;
   min-height: 62vh;
+  align-items: start;
 }
 
 .surface {
