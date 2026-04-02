@@ -25,8 +25,8 @@ export const ActionToolbar = ({ onSplit, onMerge }: Props) => {
             <option key={cluster.id} value={cluster.id}>{cluster.name}</option>
           ))}
         </Select>
-        <Button disabled={state.selectedFaceIds.length === 0} onClick={() => onSplit(splitName)}>✂️</Button>
-        <Button disabled={!mergeTarget || !state.activeClusterId} onClick={() => onMerge(Number(mergeTarget))}>🔀</Button>
+        <Button disabled={state.selectedFaceIds.length === 0} onClick={() => onSplit(splitName)}>{t.splitSelected}</Button>
+        <Button disabled={!mergeTarget || !state.activeClusterId} onClick={() => onMerge(Number(mergeTarget))}>{t.mergeCluster}</Button>
       </Space>
     </Card>
   )

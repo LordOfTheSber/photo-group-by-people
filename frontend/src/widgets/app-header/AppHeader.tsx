@@ -20,15 +20,11 @@ export const AppHeader = () => {
           </Typography.Text>
         </div>
         <Space>
-          <Button title={t.overview} aria-label={t.overview} onClick={() => (window.location.hash = '#/dashboard')}><HomeIcon /></Button>
-          <Button title={t.pipeline} aria-label={t.pipeline} onClick={() => (window.location.hash = '#/pipeline')}><PipelineIcon /></Button>
-          <Button title={t.clusters} aria-label={t.clusters} onClick={() => (window.location.hash = '#/clusters')}><ClusterIcon /></Button>
-          <Button title={`${state.language.toUpperCase()}`} aria-label="language" onClick={() => dispatch({ type: 'set_language', payload: state.language === 'ru' ? 'en' : 'ru' })}>
-            <GlobeIcon />
-          </Button>
-          <Button title={state.themeMode === 'light' ? t.darkMode : t.lightMode} aria-label="theme" onClick={() => dispatch({ type: 'set_theme', payload: state.themeMode === 'light' ? 'dark' : 'light' })}>
-            <ThemeIcon />
-          </Button>
+          <Button onClick={() => (window.location.hash = '#/dashboard')}><HomeIcon /> {t.overview}</Button>
+          <Button onClick={() => (window.location.hash = '#/pipeline')}><PipelineIcon /> {t.pipeline}</Button>
+          <Button onClick={() => (window.location.hash = '#/clusters')}><ClusterIcon /> {t.clusters}</Button>
+          <Button onClick={() => dispatch({ type: 'set_language', payload: state.language === 'ru' ? 'en' : 'ru' })}><GlobeIcon /> {state.language.toUpperCase()}</Button>
+          <Button onClick={() => dispatch({ type: 'set_theme', payload: state.themeMode === 'light' ? 'dark' : 'light' })}><ThemeIcon /> {state.themeMode === 'light' ? t.darkMode : t.lightMode}</Button>
         </Space>
       </Space>
     </Card>

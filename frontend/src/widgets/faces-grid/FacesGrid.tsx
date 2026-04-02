@@ -23,7 +23,7 @@ export const FacesGrid = ({ onRemoveFace }: { onRemoveFace: (faceId: number) => 
           </Button>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
             <Typography.Text style={{ fontSize: 11 }}>#{face.id}</Typography.Text>
-            <Button onClick={() => onRemoveFace(face.id)} title={t.remove}>🗑️</Button>
+            <Button onClick={() => onRemoveFace(face.id)}>{t.remove}</Button>
           </div>
         </Card>
       ))}

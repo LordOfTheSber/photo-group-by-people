@@ -46,8 +46,8 @@ export const ClustersWorkspace = ({ reloadClusterDetail, reloadClusters }: Props
         </div>
         <Space>
           <Input value={renameValue} onChange={(event) => setRenameValue(event.target.value)} />
-          <Button onClick={handleRename}>✏️</Button>
-          <Button onClick={() => dispatch({ type: 'clear_selection' })}>🧹</Button>
+          <Button onClick={handleRename}>{t.rename}</Button>
+          <Button onClick={() => dispatch({ type: 'clear_selection' })}>{t.clear}</Button>
         </Space>
       </Space>
       <ActionToolbar onSplit={handleSplit} onMerge={handleMerge} />

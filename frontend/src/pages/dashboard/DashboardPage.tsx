@@ -1,4 +1,4 @@
-import { Button, Card, Image, Input, Space, Typography } from 'antd'
+import { Button, Card, Image, Space, Typography } from 'antd'
 import { useEffect } from 'react'
 import { useAppStore } from '../../app/providers/store'
 import { getJobs, getProcessingSummary } from '../../shared/api/people'
@@ -32,34 +32,18 @@ export const DashboardPage = () => {
         <div>
           <Typography.Title className="hero-title">{t.heroTitle}</Typography.Title>
           <Typography.Text style={{ color: 'var(--muted)' }}>{t.heroSub}</Typography.Text>
-
-          <Card style={{ marginTop: 14, display: 'inline-block' }}>
-            <Space>
-              <Button title="pipeline">⚙️</Button>
-              <Button title="clusters">🧩</Button>
-              <Button title="preview">🖼️</Button>
-              <Button title="stats">📈</Button>
-            </Space>
-          </Card>
+          <Space style={{ marginTop: 14 }}>
+            <Button onClick={() => (window.location.hash = '#/pipeline')}>{t.openPipeline}</Button>
+            <Button onClick={() => (window.location.hash = '#/clusters')}>{t.openClusters}</Button>
+          </Space>
         </div>
         <Image src={HERO_IMAGE} alt="hero" style={{ width: '100%', maxWidth: 620, borderRadius: 18, boxShadow: 'var(--shadow-2)' }} />
       </section>
 
-      <Card className="search-strip" style={{ marginTop: 12 }}>
-        <Space style={{ width: '100%', flexWrap: 'nowrap' }}>
-          <Input placeholder={t.from} />
-          <Input placeholder={t.to} />
-          <Input placeholder={t.when} />
-          <Input placeholder={t.backTrip} />
-          <Input placeholder={t.passengers} />
-          <Button onClick={() => (window.location.hash = '#/clusters')}>{t.find}</Button>
-        </Space>
-      </Card>
-
       <section className="ai-block" style={{ marginTop: 14 }}>
         <div style={{ minWidth: 260 }}>
           <Typography.Title style={{ fontSize: 44 }}>{state.summary?.cluster_count ?? 0}</Typography.Title>
-          <Typography.Title style={{ fontSize: 32 }}>{t.aiTitle}</Typography.Title>
+          <Typography.Title style={{ fontSize: 28 }}>{t.aiTitle}</Typography.Title>
           <Typography.Text style={{ color: '#1B3C25' }}>{t.aiSub}</Typography.Text>
         </div>
 

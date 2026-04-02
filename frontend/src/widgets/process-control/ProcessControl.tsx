@@ -34,24 +34,24 @@ export const ProcessControl = ({ reloadClusters }: Props) => {
       <Typography.Title style={{ fontSize: 16 }}>{t.processPipeline}</Typography.Title>
       <Space style={{ width: '100%' }}>
         <Input value={folderPath} onChange={(event) => setFolderPath(event.target.value)} placeholder="/photos" />
-        <Button disabled={!folderPath || busy} onClick={() => runWithRefresh(() => startScan(folderPath))} title={t.scan}>🧭</Button>
-        <Button disabled={busy} onClick={() => runWithRefresh(runDetect)} title={t.detect}>🔍</Button>
-        <Button disabled={busy} onClick={() => runWithRefresh(runEmbed)} title={t.embed}>🧬</Button>
-        <Button disabled={busy} onClick={() => runWithRefresh(runCluster)} title={t.clusterVerb}>🧩</Button>
-        <Button disabled={busy} onClick={() => runWithRefresh(async () => { await runDetect(); await runEmbed(); await runCluster() })} title={t.runFull}>⚡</Button>
+        <Button disabled={!folderPath || busy} onClick={() => runWithRefresh(() => startScan(folderPath))}>{t.scan}</Button>
+        <Button disabled={busy} onClick={() => runWithRefresh(runDetect)}>{t.detect}</Button>
+        <Button disabled={busy} onClick={() => runWithRefresh(runEmbed)}>{t.embed}</Button>
+        <Button disabled={busy} onClick={() => runWithRefresh(runCluster)}>{t.clusterVerb}</Button>
+        <Button disabled={busy} onClick={() => runWithRefresh(async () => { await runDetect(); await runEmbed(); await runCluster() })}>{t.runFull}</Button>
       </Space>
       <Space style={{ width: '100%', marginTop: 8 }}>
         <Input value={exportPath} onChange={(event) => setExportPath(event.target.value)} placeholder="/export" />
         <Select value={exportStrategy} onChange={(event) => setExportStrategy(event.target.value as 'copy' | 'symlink' | 'hardlink')}>
           <option value="copy">copy</option><option value="symlink">symlink</option><option value="hardlink">hardlink</option>
         </Select>
-        <Button disabled={!exportPath || busy} onClick={() => runWithRefresh(() => startExport(exportPath, exportStrategy))} title={t.export}>📤</Button>
+        <Button disabled={!exportPath || busy} onClick={() => runWithRefresh(() => startExport(exportPath, exportStrategy))}>{t.export}</Button>
       </Space>
       <div style={{ maxHeight: 170, overflow: 'auto', borderTop: '1px solid var(--border)', paddingTop: 8, marginTop: 8 }}>
         {state.jobs.map((job) => (
           <Space key={job.id} style={{ width: '100%', justifyContent: 'space-between', marginBottom: 5 }}>
             <Typography.Text style={{ fontSize: 12 }}>#{job.id} {job.job_type} · {job.status} ({job.processed_items}/{job.total_items})</Typography.Text>
-            <Button disabled={job.error_count === 0 || busy} onClick={() => runWithRefresh(() => retryFailedItems(job.id))} title={t.retryFailed}>🔁</Button>
+            <Button disabled={job.error_count === 0 || busy} onClick={() => runWithRefresh(() => retryFailedItems(job.id))}>{t.retryFailed}</Button>
           </Space>
         ))}
         {state.jobs.length === 0 && <Typography.Text style={{ color: 'var(--muted)' }}>{t.noJobs}</Typography.Text>}
