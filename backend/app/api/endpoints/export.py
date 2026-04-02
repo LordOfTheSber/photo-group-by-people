@@ -1,4 +1,4 @@
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.db.models import Job
@@ -6,18 +6,19 @@ from app.db.session import get_db
 from app.schemas.export import ExportRequest, ExportStartResponse
 from app.schemas.jobs import JobRead
 from app.services.exporter import run_export_job
+from app.services.job_runner import submit_job
 
 router = APIRouter(prefix="/export", tags=["export"])
 
 
 @router.post("", response_model=ExportStartResponse)
-def start_export(request: ExportRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db)) -> ExportStartResponse:
+def start_export(request: ExportRequest, db: Session = Depends(get_db)) -> ExportStartResponse:
     job = Job(job_type="export", status="queued", total_items=0, processed_items=0, error_count=0)
     db.add(job)
     db.commit()
     db.refresh(job)
 
-    background_tasks.add_task(
+    submit_job(
         run_export_job,
         job.id,
         request.output_dir,
