@@ -3,8 +3,8 @@ import React from 'react'
 type BaseProps = React.HTMLAttributes<HTMLDivElement> & { style?: React.CSSProperties; children?: React.ReactNode }
 
 export const Layout = ({ children, style, ...rest }: BaseProps) => <div {...rest} style={{ display: 'flex', minHeight: '100vh', ...style }}>{children}</div>
-Layout.Header = ({ children, style, ...rest }: BaseProps) => <header {...rest} style={{ padding: 12, borderBottom: '1px solid var(--border)', ...style }}>{children}</header>
-Layout.Sider = ({ children, style, ...rest }: BaseProps) => <aside {...rest} style={{ width: 260, borderRight: '1px solid var(--border)', padding: 12, ...style }}>{children}</aside>
+Layout.Header = ({ children, style, ...rest }: BaseProps) => <header {...rest} style={{ padding: 10, borderBottom: '1px solid var(--border)', ...style }}>{children}</header>
+Layout.Sider = ({ children, style, ...rest }: BaseProps) => <aside {...rest} style={{ width: 260, borderRight: '1px solid var(--border)', padding: 10, ...style }}>{children}</aside>
 Layout.Content = ({ children, style, ...rest }: BaseProps) => <main {...rest} style={{ flex: 1, padding: 16, ...style }}>{children}</main>
 
 export const Card = ({ children, style, ...rest }: BaseProps) => (
@@ -13,8 +13,8 @@ export const Card = ({ children, style, ...rest }: BaseProps) => (
     style={{
       background: 'var(--surfaceElevated, var(--surface))',
       border: '1px solid var(--border)',
-      borderRadius: 12,
-      padding: 12,
+      borderRadius: 10,
+      padding: 10,
       color: 'var(--text)',
       ...style,
     }}
@@ -31,7 +31,7 @@ export const Button = ({ children, style, ...props }: React.ButtonHTMLAttributes
       color: '#fff',
       border: 'none',
       borderRadius: 8,
-      padding: '6px 10px',
+      padding: '5px 8px',
       ...style,
     }}
   >
@@ -45,7 +45,7 @@ export const Input = (props: React.InputHTMLAttributes<HTMLInputElement>) => (
     style={{
       border: '1px solid var(--border)',
       borderRadius: 8,
-      padding: '6px 10px',
+      padding: '5px 8px',
       width: '100%',
       background: 'var(--surfaceSubtle)',
       color: 'var(--text)',
@@ -60,7 +60,7 @@ export const Select = ({ children, ...props }: React.SelectHTMLAttributes<HTMLSe
     style={{
       border: '1px solid var(--border)',
       borderRadius: 8,
-      padding: '6px 10px',
+      padding: '5px 8px',
       width: '100%',
       background: 'var(--surfaceSubtle)',
       color: 'var(--text)',

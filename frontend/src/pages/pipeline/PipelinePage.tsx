@@ -20,6 +20,8 @@ export const PipelinePage = () => {
       dispatch({ type: 'set_jobs', payload: jobs.items })
     }
     void load()
+    const timer = window.setInterval(() => void load(), 10000)
+    return () => window.clearInterval(timer)
   }, [dispatch])
 
   return (

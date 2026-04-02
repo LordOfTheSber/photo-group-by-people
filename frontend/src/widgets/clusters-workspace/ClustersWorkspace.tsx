@@ -1,6 +1,7 @@
 import { Button, Input, Space, Typography } from 'antd'
 import { useState } from 'react'
 import { useAppStore } from '../../app/providers/store'
+import { useI18n } from '../../shared/hooks/useI18n'
 import { mergeClusters, renameCluster, splitFaces, unassignFace } from '../../shared/api/people'
 import { ActionToolbar } from '../action-toolbar/ActionToolbar'
 import { FacesGrid } from '../faces-grid/FacesGrid'
@@ -12,9 +13,10 @@ type Props = {
 
 export const ClustersWorkspace = ({ reloadClusterDetail, reloadClusters }: Props) => {
   const { state, dispatch } = useAppStore()
+  const t = useI18n()
   const [renameValue, setRenameValue] = useState(state.activeClusterDetail?.name ?? '')
   const active = state.activeClusterDetail
-  if (!active) return <div style={{ padding: 16 }}>Select cluster from sidebar.</div>
+  if (!active) return <div style={{ padding: 16 }}>{t.selectCluster}</div>
 
   const handleRename = async () => {
     await renameCluster(active.id, renameValue.trim() || active.name)
@@ -36,16 +38,16 @@ export const ClustersWorkspace = ({ reloadClusterDetail, reloadClusters }: Props
   }
 
   return (
-    <section style={{ display: 'grid', gap: 12 }}>
+    <section style={{ display: 'grid', gap: 10 }}>
       <Space style={{ justifyContent: 'space-between', width: '100%' }}>
         <div>
-          <Typography.Title style={{ fontSize: 20 }}>{active.name}</Typography.Title>
-          <Typography.Text style={{ color: 'var(--muted)' }}>{active.faces.length} faces · {active.images.length} images</Typography.Text>
+          <Typography.Title style={{ fontSize: 18 }}>{active.name}</Typography.Title>
+          <Typography.Text style={{ color: 'var(--muted)' }}>{active.faces.length} · {active.images.length}</Typography.Text>
         </div>
         <Space>
           <Input value={renameValue} onChange={(event) => setRenameValue(event.target.value)} />
-          <Button onClick={handleRename}>Rename</Button>
-          <Button onClick={() => dispatch({ type: 'clear_selection' })}>Clear selection</Button>
+          <Button onClick={handleRename}>✏️</Button>
+          <Button onClick={() => dispatch({ type: 'clear_selection' })}>🧹</Button>
         </Space>
       </Space>
       <ActionToolbar onSplit={handleSplit} onMerge={handleMerge} />
