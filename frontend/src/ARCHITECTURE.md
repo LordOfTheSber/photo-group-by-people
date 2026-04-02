@@ -16,6 +16,7 @@ src/
     app-header/
     sidebar/
     statistics-summary/
+    process-control/
     filters-panel/
     clusters-workspace/
     faces-grid/
@@ -79,4 +80,4 @@ Keep local (component state) when:
 2. Value is used by a single component and not needed elsewhere.
 3. It can be recalculated cheaply.
 
-Current implementation is backend-first: all main UI flows (list clusters, open cluster details, rename, split, merge, remove face, load summary/jobs) call real REST endpoints from `shared/api/people.ts`.
+Current implementation is backend-first: all clustering processes are connected to backend endpoints (scan, detect, embed, cluster, retry failed, export) and review flows (list/open clusters, rename, split, merge, remove face, summary/jobs refresh).

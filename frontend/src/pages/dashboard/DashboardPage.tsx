@@ -6,6 +6,7 @@ import { ClustersWorkspace } from '../../widgets/clusters-workspace/ClustersWork
 import { FiltersPanel } from '../../widgets/filters-panel/FiltersPanel'
 import { PreviewPanel } from '../../widgets/preview-panel/PreviewPanel'
 import { Sidebar } from '../../widgets/sidebar/Sidebar'
+import { ProcessControl } from '../../widgets/process-control/ProcessControl'
 import { StatisticsSummary } from '../../widgets/statistics-summary/StatisticsSummary'
 
 export const DashboardPage = () => {
@@ -59,6 +60,7 @@ export const DashboardPage = () => {
     <main style={{ padding: 16, maxWidth: 1600, margin: '0 auto' }}>
       <AppHeader />
       <StatisticsSummary />
+      <ProcessControl reloadClusters={reloadClusters} />
       <div style={{ marginTop: 12, marginBottom: 12 }}>
         <FiltersPanel />
       </div>
