@@ -77,3 +77,29 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 }
 
 h1, h2, h3, p, span, div, label { color: inherit; }
+
+
+.hero-section {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 16px;
+  padding: 14px;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #DFF0FA 0%, #F3FAFF 100%);
+}
+.hero-title { font-size: 62px !important; line-height: 1.02; margin-bottom: 10px !important; }
+.search-strip { border-radius: 18px !important; }
+.ai-block {
+  display: flex;
+  gap: 14px;
+  padding: 14px;
+  border-radius: 22px;
+  background: linear-gradient(135deg, #B8F56E, #98E85A);
+}
+
+@media (max-width: 1000px) {
+  .hero-section { grid-template-columns: 1fr; }
+  .hero-title { font-size: 44px !important; }
+  .search-strip > div { flex-wrap: wrap !important; }
+  .ai-block { flex-direction: column; }
+}
