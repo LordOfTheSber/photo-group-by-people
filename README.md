@@ -16,6 +16,21 @@ The goal is to avoid over-engineering and produce a **practical, compact, correc
 - supports both **backend and frontend**,
 - remains simple enough for a small team or a single strong developer to build.
 
+## Quick local delivery (Phase 12)
+
+1. Backend:
+   - `cd backend`
+   - `python -m venv .venv && source .venv/bin/activate`
+   - `pip install -r requirements.txt`
+   - optional ML runtime: `pip install -r requirements-ml.txt`
+2. Frontend:
+   - `cd frontend && npm install`
+3. Run:
+   - backend: `make backend` (from repo root)
+   - frontend: `make frontend`
+4. Open `http://127.0.0.1:5173`, run scan, run pipeline, review clusters, then export.
+5. Optional container path: `docker compose up --build`.
+
 ---
 
 ## Product Definition

@@ -1,16 +1,19 @@
 from pathlib import Path
+import logging
 from typing import TYPE_CHECKING, Any
 
 from sqlalchemy.orm import Session
 
 from app.db.models import Face, Job, PersonCluster, PersonImage
 from app.db.session import SessionLocal
+from app.services.job_reporting import record_item_error
 
 if TYPE_CHECKING:
     import numpy as np
 
 DEFAULT_DBSCAN_EPS = 0.48
 DEFAULT_DBSCAN_MIN_SAMPLES = 2
+logger = logging.getLogger(__name__)
 
 
 def _ensure_numpy() -> Any:
@@ -97,6 +100,12 @@ def run_face_clustering_job(job_id: int, eps: float = DEFAULT_DBSCAN_EPS, min_sa
         if not faces_with_embeddings:
             job.status = "failed"
             job.message = "No face embeddings found. Run face detection and face embedding first."
+            record_item_error(
+                db,
+                job_id=job.id,
+                stage="face_clustering",
+                error_message=job.message,
+            )
             db.commit()
             return
 
@@ -139,6 +148,7 @@ def run_face_clustering_job(job_id: int, eps: float = DEFAULT_DBSCAN_EPS, min_sa
 
         job.status = "completed"
         job.message = f"Created {len(clusters)} clusters with eps={eps} and min_samples={min_samples}"
+        logger.info("clustering completed: job_id=%s clusters=%s faces=%s", job_id, len(clusters), len(faces))
         db.commit()
     except Exception as exc:
         db.rollback()
@@ -146,6 +156,7 @@ def run_face_clustering_job(job_id: int, eps: float = DEFAULT_DBSCAN_EPS, min_sa
         if failed_job:
             failed_job.status = "failed"
             failed_job.message = str(exc)
+            record_item_error(db, job_id=failed_job.id, stage="face_clustering", error_message=str(exc))
             db.commit()
     finally:
         db.close()

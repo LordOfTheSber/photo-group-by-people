@@ -13,6 +13,16 @@ type Job = {
   updated_at: string
 }
 
+type ProcessingSummary = {
+  total_images: number
+  images_with_faces: number
+  total_faces: number
+  cluster_count: number
+  unclustered_faces: number
+  failed_images: number
+  unresolved_errors: number
+}
+
 type PersonCluster = {
   id: number
   name: string
@@ -126,13 +136,18 @@ function HomePage() {
 
 function ProgressPage() {
   const [jobs, setJobs] = useState<Job[]>([])
+  const [summary, setSummary] = useState<ProcessingSummary | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
   const load = async () => {
     try {
-      const data = await api<{ items: Job[]; total: number }>('/jobs?limit=50')
-      setJobs(data.items)
+      const [jobsData, summaryData] = await Promise.all([
+        api<{ items: Job[]; total: number }>('/jobs?limit=50'),
+        api<ProcessingSummary>('/reports/processing-summary'),
+      ])
+      setJobs(jobsData.items)
+      setSummary(summaryData)
       setError('')
     } catch (e) {
       setError((e as Error).message)
@@ -144,6 +159,15 @@ function ProgressPage() {
   const trigger = async (path: string) => {
     try {
       await api(path, { method: 'POST' })
+      await load()
+    } catch (e) {
+      setError((e as Error).message)
+    }
+  }
+
+  const retryFailedForJob = async (jobId: number) => {
+    try {
+      await api(`/jobs/${jobId}/retry-failed`, { method: 'POST', body: JSON.stringify({ limit: 100 }) })
       await load()
     } catch (e) {
       setError((e as Error).message)
@@ -184,6 +208,16 @@ function ProgressPage() {
   return (
     <section>
       <h2>Processing progress</h2>
+      {summary && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 8, marginBottom: 12 }}>
+          <StatCard label="Images" value={summary.total_images} />
+          <StatCard label="With faces" value={summary.images_with_faces} />
+          <StatCard label="Faces" value={summary.total_faces} />
+          <StatCard label="Clusters" value={summary.cluster_count} />
+          <StatCard label="Unclustered" value={summary.unclustered_faces} />
+          <StatCard label="Failed images" value={summary.failed_images} />
+        </div>
+      )}
       <div style={{ marginBottom: 12 }}>
         <button onClick={runFullPipeline}>Run full pipeline</button>
         <button onClick={() => trigger('/faces/detect')} style={{ marginLeft: 8 }}>Run face detection</button>
@@ -212,11 +246,17 @@ function ProgressPage() {
       </div>
       {loading && <p>Loading jobs...</p>}
       {error && <p style={{ color: 'crimson' }}>{error}</p>}
+      {!jobs.length && !loading && <p>No processing jobs yet. Start with scan, then run the pipeline.</p>}
       <ul>
         {jobs.map((job) => (
           <li key={job.id}>
             #{job.id} {job.job_type} — <strong>{job.status}</strong> ({job.processed_items}/{job.total_items})
             {job.message ? <div style={{ color: '#555', fontSize: 12 }}>{job.message}</div> : null}
+            {job.error_count > 0 && (
+              <button onClick={() => retryFailedForJob(job.id)} style={{ marginTop: 6 }}>
+                Retry failed items
+              </button>
+            )}
           </li>
         ))}
       </ul>
@@ -290,6 +330,7 @@ function PeoplePage() {
       </div>
       {loading && <p>Loading clusters...</p>}
       {error && <p style={{ color: 'crimson' }}>{error}</p>}
+      {!clusters.length && !loading && !error && <p>No clusters yet. Run detection, embeddings, and clustering first.</p>}
       <div style={{ display: 'grid', gap: 12, gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}>
         {clusters.map((cluster) => (
           <article key={cluster.id} style={{ border: '1px solid #ddd', padding: 8 }}>
@@ -550,6 +591,15 @@ function App() {
       </nav>
       {view}
     </main>
+  )
+}
+
+function StatCard({ label, value }: { label: string; value: number }) {
+  return (
+    <div style={{ border: '1px solid #ddd', borderRadius: 6, padding: 8, background: '#fafafa' }}>
+      <div style={{ fontSize: 12, color: '#666' }}>{label}</div>
+      <div style={{ fontSize: 20, fontWeight: 600 }}>{value}</div>
+    </div>
   )
 }
 

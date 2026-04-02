@@ -1,4 +1,5 @@
 import json
+import logging
 import shutil
 from pathlib import Path
 
@@ -6,6 +7,9 @@ from sqlalchemy.orm import Session
 
 from app.db.models import Job, PersonCluster, PersonImage
 from app.db.session import SessionLocal
+from app.services.job_reporting import record_item_error
+
+logger = logging.getLogger(__name__)
 
 
 def _safe_name(value: str, fallback: str) -> str:
@@ -73,6 +77,14 @@ def run_export_job(job_id: int, output_dir: str, strategy: str, include_report: 
 
             if not source_path.exists() or not source_path.is_file():
                 job.error_count += 1
+                record_item_error(
+                    db,
+                    job_id=job.id,
+                    stage="export",
+                    image_id=image.id,
+                    file_path=str(source_path),
+                    error_message=f"Missing source file: {source_path}",
+                )
                 cast_errors = summary["errors"]
                 if isinstance(cast_errors, list):
                     cast_errors.append(f"Missing source file: {source_path}")
@@ -85,6 +97,14 @@ def run_export_job(job_id: int, output_dir: str, strategy: str, include_report: 
 
             if error:
                 job.error_count += 1
+                record_item_error(
+                    db,
+                    job_id=job.id,
+                    stage="export",
+                    image_id=image.id,
+                    file_path=str(source_path),
+                    error_message=f"Failed for {source_path}: {error}",
+                )
                 cast_errors = summary["errors"]
                 if isinstance(cast_errors, list):
                     cast_errors.append(f"Failed for {source_path}: {error}")
@@ -104,6 +124,7 @@ def run_export_job(job_id: int, output_dir: str, strategy: str, include_report: 
 
         job.status = "completed"
         job.message = f"Exported {job.processed_items - job.error_count}/{job.processed_items} link targets"
+        logger.info("export completed: job_id=%s processed=%s errors=%s", job_id, job.processed_items, job.error_count)
         db.commit()
     except Exception as exc:
         db.rollback()

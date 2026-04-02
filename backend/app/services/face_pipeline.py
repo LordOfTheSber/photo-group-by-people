@@ -1,4 +1,5 @@
 import json
+import logging
 from pathlib import Path
 from typing import Any
 
@@ -8,8 +9,10 @@ from sqlalchemy.orm import Session
 from app.core.config import get_settings
 from app.db.models import Face, Image, Job
 from app.db.session import SessionLocal
+from app.services.job_reporting import record_item_error, resolve_item_error
 
 THUMBNAIL_SIZE = (224, 224)
+logger = logging.getLogger(__name__)
 
 
 def _ensure_numpy() -> Any:
@@ -73,6 +76,7 @@ def run_face_detection_job(job_id: int) -> None:
         face_recognition = _ensure_face_recognition()
 
         images = db.query(Image).order_by(Image.id.asc()).all()
+        logger.info("face detection started: job_id=%s images=%s", job_id, len(images))
         job.status = "running"
         job.total_items = len(images)
         job.processed_items = 0
@@ -118,12 +122,25 @@ def run_face_detection_job(job_id: int) -> None:
                 db.rollback()
                 job.error_count += 1
                 job.message = f"Some images failed face detection. Last error: {exc}"
+                record_item_error(
+                    db,
+                    job_id=job.id,
+                    stage="face_detection",
+                    image_id=image_row.id,
+                    file_path=image_row.file_path,
+                    error_message=str(exc),
+                )
+                logger.exception("face detection failed: job_id=%s image_id=%s", job_id, image_row.id)
+                db.commit()
+            else:
+                resolve_item_error(db, stage="face_detection", image_id=image_row.id)
                 db.commit()
 
         job.status = "completed"
         if job.error_count > 0 and not job.message:
             job.message = "Detection completed with partial errors"
         db.commit()
+        logger.info("face detection completed: job_id=%s errors=%s", job_id, job.error_count)
     except Exception as exc:
         db.rollback()
         failed_job = db.get(Job, job_id)
@@ -188,11 +205,21 @@ def run_face_embedding_job(job_id: int) -> None:
                 np.save(embedding_path, embedding)
 
                 face.embedding_path = str(embedding_path.resolve())
+                resolve_item_error(db, stage="face_embedding", face_id=face.id)
                 db.commit()
             except Exception as exc:
                 db.rollback()
                 job.error_count += 1
                 job.message = f"Some faces failed embedding generation. Last error: {exc}"
+                record_item_error(
+                    db,
+                    job_id=job.id,
+                    stage="face_embedding",
+                    face_id=face.id,
+                    image_id=face.image_id,
+                    error_message=str(exc),
+                )
+                logger.exception("face embedding failed: job_id=%s face_id=%s", job_id, face.id)
                 db.commit()
 
         job.status = "completed"
