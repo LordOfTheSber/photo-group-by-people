@@ -52,3 +52,25 @@ class FaceUnassignResponse(BaseModel):
     cluster_id: int
     face_id: int
     status: str
+
+
+class MergeClustersRequest(BaseModel):
+    source_cluster_ids: list[int] = Field(min_length=1)
+    target_cluster_id: int
+
+
+class SplitFacesRequest(BaseModel):
+    source_cluster_id: int
+    face_ids: list[int] = Field(min_length=1)
+    destination_cluster_name: str | None = Field(default=None, min_length=1, max_length=255)
+
+
+class CreateClusterFromFacesRequest(BaseModel):
+    face_ids: list[int] = Field(min_length=1)
+    cluster_name: str | None = Field(default=None, min_length=1, max_length=255)
+
+
+class ClusterMutationResponse(BaseModel):
+    status: str
+    affected_cluster_ids: list[int]
+    moved_face_count: int

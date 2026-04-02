@@ -31,7 +31,24 @@ type PersonDetail = {
   images: Array<{ id: number; file_name: string; preview_url: string }>
 }
 
+type ClusterMutationResponse = {
+  status: string
+  affected_cluster_ids: number[]
+  moved_face_count: number
+}
+
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'
+const PEOPLE_PAGE_SIZE = 100
+const PEOPLE_POLL_INTERVAL_MS = 5000
+
+function useDebouncedValue<T>(value: T, delayMs: number): T {
+  const [debounced, setDebounced] = useState(value)
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebounced(value), delayMs)
+    return () => window.clearTimeout(timer)
+  }, [value, delayMs])
+  return debounced
+}
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const headers = new Headers(init?.headers)
@@ -144,6 +161,20 @@ function ProgressPage() {
     }
   }
 
+  const [exportPath, setExportPath] = useState('')
+  const [exportStrategy, setExportStrategy] = useState<'copy' | 'symlink' | 'hardlink'>('copy')
+  const triggerExport = async () => {
+    try {
+      await api('/export', {
+        method: 'POST',
+        body: JSON.stringify({ output_dir: exportPath, strategy: exportStrategy, include_report: true }),
+      })
+      await load()
+    } catch (e) {
+      setError((e as Error).message)
+    }
+  }
+
   useEffect(() => {
     load()
     const timer = setInterval(load, 5000)
@@ -161,6 +192,22 @@ function ProgressPage() {
         </button>
         <button onClick={() => trigger('/faces/cluster')} style={{ marginLeft: 8 }}>
           Run clustering
+        </button>
+      </div>
+      <div style={{ marginBottom: 12 }}>
+        <input
+          value={exportPath}
+          onChange={(e) => setExportPath(e.target.value)}
+          placeholder="/absolute/path/to/export"
+          style={{ width: 320, marginRight: 8 }}
+        />
+        <select value={exportStrategy} onChange={(e) => setExportStrategy(e.target.value as 'copy' | 'symlink' | 'hardlink')}>
+          <option value="copy">copy</option>
+          <option value="symlink">symlink</option>
+          <option value="hardlink">hardlink</option>
+        </select>
+        <button onClick={triggerExport} disabled={!exportPath} style={{ marginLeft: 8 }}>
+          Run export
         </button>
       </div>
       {loading && <p>Loading jobs...</p>}
@@ -181,17 +228,66 @@ function PeoplePage() {
   const [clusters, setClusters] = useState<PersonCluster[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [offset, setOffset] = useState(0)
+  const [total, setTotal] = useState(0)
+  const [searchInput, setSearchInput] = useState('')
+  const debouncedSearch = useDebouncedValue(searchInput, 300)
+
+  const load = async () => {
+    try {
+      const params = new URLSearchParams({
+        limit: String(PEOPLE_PAGE_SIZE),
+        offset: String(offset),
+      })
+      if (debouncedSearch.trim()) params.set('search', debouncedSearch.trim())
+      const res = await api<{ items: PersonCluster[]; total: number }>(`/people?${params.toString()}`)
+      setClusters(res.items)
+      setTotal(res.total)
+      setError('')
+    } catch (e) {
+      setError((e as Error).message)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    api<{ items: PersonCluster[]; total: number }>('/people?limit=100')
-      .then((res) => setClusters(res.items))
-      .catch((e) => setError((e as Error).message))
-      .finally(() => setLoading(false))
-  }, [])
+    setOffset(0)
+  }, [debouncedSearch])
+
+  useEffect(() => {
+    load()
+    const timer = setInterval(load, PEOPLE_POLL_INTERVAL_MS)
+    return () => clearInterval(timer)
+  }, [offset, debouncedSearch])
+
+  const pageStart = total === 0 ? 0 : offset + 1
+  const pageEnd = Math.min(offset + clusters.length, total)
+  const canPrev = offset > 0
+  const canNext = offset + PEOPLE_PAGE_SIZE < total
 
   return (
     <section>
       <h2>People clusters</h2>
+      <div style={{ marginBottom: 12 }}>
+        <input
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          placeholder="Search by cluster name prefix"
+          style={{ width: 280, marginRight: 8 }}
+        />
+      </div>
+      <div style={{ marginBottom: 12 }}>
+        <button onClick={() => setOffset((prev) => Math.max(0, prev - PEOPLE_PAGE_SIZE))} disabled={!canPrev}>
+          ← Prev 100
+        </button>
+        <button onClick={() => setOffset((prev) => prev + PEOPLE_PAGE_SIZE)} disabled={!canNext} style={{ marginLeft: 8 }}>
+          Next 100 →
+        </button>
+        <span style={{ marginLeft: 12, fontSize: 13 }}>
+          {pageStart}-{pageEnd} of {total}
+        </span>
+      </div>
       {loading && <p>Loading clusters...</p>}
       {error && <p style={{ color: 'crimson' }}>{error}</p>}
       <div style={{ display: 'grid', gap: 12, gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}>
@@ -215,6 +311,15 @@ function PersonDetailPage({ clusterId }: { clusterId: number }) {
   const [name, setName] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [selectedFaceIds, setSelectedFaceIds] = useState<number[]>([])
+  const [destinationName, setDestinationName] = useState('')
+  const [mergeTargetId, setMergeTargetId] = useState('')
+  const [mergeClusters, setMergeClusters] = useState<PersonCluster[]>([])
+  const [mergeSearchInput, setMergeSearchInput] = useState('')
+  const debouncedMergeSearch = useDebouncedValue(mergeSearchInput, 1000)
+  const [mergeDropdownOpen, setMergeDropdownOpen] = useState(false)
+  const [selectedMergeCluster, setSelectedMergeCluster] = useState<PersonCluster | null>(null)
+  const [mutationMessage, setMutationMessage] = useState('')
 
   const load = async () => {
     setLoading(true)
@@ -223,6 +328,7 @@ function PersonDetailPage({ clusterId }: { clusterId: number }) {
       setDetail(data)
       setName(data.name)
       setError('')
+      setSelectedFaceIds([])
     } catch (e) {
       setError((e as Error).message)
     } finally {
@@ -233,6 +339,32 @@ function PersonDetailPage({ clusterId }: { clusterId: number }) {
   useEffect(() => {
     load()
   }, [clusterId])
+
+  const loadMergeCandidates = async () => {
+    const searchValue = debouncedMergeSearch.trim()
+    if (!searchValue) {
+      setMergeClusters([])
+      setMergeDropdownOpen(false)
+      return
+    }
+
+    try {
+      const params = new URLSearchParams({
+        limit: String(PEOPLE_PAGE_SIZE),
+        offset: '0',
+      })
+      params.set('search', searchValue)
+      const res = await api<{ items: PersonCluster[]; total: number }>(`/people?${params.toString()}`)
+      setMergeClusters(res.items.filter((cluster) => cluster.id !== clusterId))
+      setMergeDropdownOpen(true)
+    } catch {
+      // Keep the main page working even if merge candidate loading fails.
+    }
+  }
+
+  useEffect(() => {
+    loadMergeCandidates()
+  }, [clusterId, debouncedMergeSearch])
 
   const rename = async () => {
     try {
@@ -247,6 +379,57 @@ function PersonDetailPage({ clusterId }: { clusterId: number }) {
     try {
       await api(`/people/${clusterId}/faces/${faceId}`, { method: 'DELETE' })
       await load()
+    } catch (e) {
+      setError((e as Error).message)
+    }
+  }
+
+  const toggleFaceSelection = (faceId: number) => {
+    setSelectedFaceIds((prev) => (prev.includes(faceId) ? prev.filter((id) => id !== faceId) : [...prev, faceId]))
+  }
+
+  const splitSelectedFaces = async () => {
+    if (!selectedFaceIds.length) return
+    try {
+      const result = await api<ClusterMutationResponse>('/people/split', {
+        method: 'POST',
+        body: JSON.stringify({
+          source_cluster_id: clusterId,
+          face_ids: selectedFaceIds,
+          destination_cluster_name: destinationName || undefined,
+        }),
+      })
+      setMutationMessage(`Split complete: moved ${result.moved_face_count} faces`)
+      await load()
+    } catch (e) {
+      setError((e as Error).message)
+    }
+  }
+
+  const createClusterFromFaces = async () => {
+    if (!selectedFaceIds.length) return
+    try {
+      const result = await api<ClusterMutationResponse>('/people/create-from-faces', {
+        method: 'POST',
+        body: JSON.stringify({ face_ids: selectedFaceIds, cluster_name: destinationName || undefined }),
+      })
+      setMutationMessage(`Created cluster from ${result.moved_face_count} faces`)
+      await load()
+    } catch (e) {
+      setError((e as Error).message)
+    }
+  }
+
+  const mergeIntoTarget = async () => {
+    const target = Number(mergeTargetId || selectedMergeCluster?.id)
+    if (!target) return
+    try {
+      const result = await api<ClusterMutationResponse>('/people/merge', {
+        method: 'POST',
+        body: JSON.stringify({ source_cluster_ids: [clusterId], target_cluster_id: target }),
+      })
+      setMutationMessage(`Merged into cluster ${target}, moved ${result.moved_face_count} faces`)
+      window.location.hash = `#/people/${target}`
     } catch (e) {
       setError((e as Error).message)
     }
@@ -267,11 +450,67 @@ function PersonDetailPage({ clusterId }: { clusterId: number }) {
         <input value={name} onChange={(e) => setName(e.target.value)} />
         <button onClick={rename} style={{ marginLeft: 8 }}>Rename cluster</button>
       </div>
+      <div style={{ marginBottom: 16 }}>
+        <input
+          value={destinationName}
+          onChange={(e) => setDestinationName(e.target.value)}
+          placeholder="Name for new cluster (optional)"
+          style={{ width: 280 }}
+        />
+        <button onClick={splitSelectedFaces} disabled={!selectedFaceIds.length} style={{ marginLeft: 8 }}>
+          Split selected faces
+        </button>
+        <button onClick={createClusterFromFaces} disabled={!selectedFaceIds.length} style={{ marginLeft: 8 }}>
+          Create cluster from selected
+        </button>
+      </div>
+      <div style={{ marginBottom: 16 }}>
+        <input
+          value={mergeSearchInput}
+          onChange={(e) => {
+            setMergeSearchInput(e.target.value)
+            setMergeTargetId('')
+            setSelectedMergeCluster(null)
+          }}
+          placeholder="Search merge target (prefix)"
+          style={{ width: 220, marginRight: 8 }}
+        />
+        {mergeDropdownOpen && mergeClusters.length > 0 && (
+          <select
+            value={mergeTargetId}
+            onChange={(e) => {
+              const value = e.target.value
+              setMergeTargetId(value)
+              const picked = mergeClusters.find((cluster) => String(cluster.id) === value) ?? null
+              setSelectedMergeCluster(picked)
+            }}
+          >
+            <option value="">Choose target cluster...</option>
+            {mergeClusters.map((cluster) => (
+              <option key={cluster.id} value={cluster.id}>
+                {cluster.id} — {cluster.name}
+              </option>
+            ))}
+          </select>
+        )}
+        <button onClick={mergeIntoTarget} disabled={!mergeTargetId} style={{ marginLeft: 8 }}>
+          Merge cluster
+        </button>
+      </div>
+      {mutationMessage && <p style={{ color: 'green' }}>{mutationMessage}</p>}
 
       <h3>Face crops (remove incorrect)</h3>
       <div style={{ display: 'grid', gap: 8, gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))' }}>
         {detail.faces.map((face) => (
           <div key={face.id} style={{ border: '1px solid #ddd', padding: 6 }}>
+            <label style={{ fontSize: 12 }}>
+              <input
+                type="checkbox"
+                checked={selectedFaceIds.includes(face.id)}
+                onChange={() => toggleFaceSelection(face.id)}
+              />{' '}
+              Select
+            </label>
             {face.thumbnail_url && <img src={toAssetUrl(face.thumbnail_url)} alt={`Face ${face.id}`} style={{ width: '100%', aspectRatio: '1/1', objectFit: 'cover' }} />}
             <button onClick={() => removeFace(face.id)} style={{ width: '100%', marginTop: 6 }}>Remove</button>
           </div>
