@@ -1,7 +1,6 @@
 import { Button, Card, Space, Typography } from 'antd'
 import { useAppStore } from '../../app/providers/store'
 import { useI18n } from '../../shared/hooks/useI18n'
-import { ClusterIcon, GlobeIcon, HomeIcon, PipelineIcon, ThemeIcon } from '../../shared/ui/icons'
 
 export const AppHeader = () => {
   const { state, dispatch } = useAppStore()
@@ -20,11 +19,11 @@ export const AppHeader = () => {
           </Typography.Text>
         </div>
         <Space style={{ justifyContent: 'flex-end', maxWidth: 560 }}>
-          <Button onClick={() => (window.location.hash = '#/dashboard')}><HomeIcon /> {t.overview}</Button>
-          <Button onClick={() => (window.location.hash = '#/pipeline')}><PipelineIcon /> {t.pipeline}</Button>
-          <Button onClick={() => (window.location.hash = '#/clusters')}><ClusterIcon /> {t.clusters}</Button>
-          <Button onClick={() => dispatch({ type: 'set_language', payload: state.language === 'ru' ? 'en' : 'ru' })}><GlobeIcon /> {state.language.toUpperCase()}</Button>
-          <Button onClick={() => dispatch({ type: 'set_theme', payload: state.themeMode === 'light' ? 'dark' : 'light' })}><ThemeIcon /> {state.themeMode === 'light' ? t.darkMode : t.lightMode}</Button>
+          <Button onClick={() => (window.location.hash = '#/dashboard')}>{t.overview}</Button>
+          <Button onClick={() => (window.location.hash = '#/pipeline')}>{t.pipeline}</Button>
+          <Button onClick={() => (window.location.hash = '#/clusters')}>{t.clusters}</Button>
+          <Button onClick={() => dispatch({ type: 'set_language', payload: state.language === 'ru' ? 'en' : 'ru' })}>{state.language.toUpperCase()}</Button>
+          <Button onClick={() => dispatch({ type: 'set_theme', payload: state.themeMode === 'light' ? 'dark' : 'light' })}>{state.themeMode === 'light' ? t.darkMode : t.lightMode}</Button>
         </Space>
       </Space>
     </Card>

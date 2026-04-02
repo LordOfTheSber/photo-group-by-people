@@ -27,7 +27,7 @@ export const ClusterDetailPage = ({ clusterId }: { clusterId: number }) => {
 
   return (
     <main className="app-shell">
-      <Button onClick={() => (window.location.hash = '#/clusters')} style={{ marginBottom: 10 }} title={t.back}>↩</Button>
+      <Button onClick={() => (window.location.hash = '#/clusters')} style={{ marginBottom: 10 }} title={t.back}>{t.back}</Button>
       <section className="bento-grid" style={{ gridTemplateColumns: 'minmax(0, 1fr) 300px' }}>
         <div className="surface" style={{ padding: 10 }}><ClustersWorkspace reloadClusters={reloadClusters} reloadClusterDetail={reloadClusterDetail} /></div>
         <PreviewPanel />

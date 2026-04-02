@@ -5,7 +5,7 @@ import { getJobs, getProcessingSummary } from '../../shared/api/people'
 import { useI18n } from '../../shared/hooks/useI18n'
 import { AppHeader } from '../../widgets/app-header/AppHeader'
 
-const HERO_IMAGE = 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=1200&q=80'
+const HERO_IMAGE = 'https://images.unsplash.com/photo-1516724562728-afc824a36e84?auto=format&fit=crop&w=1200&q=80'
 
 export const DashboardPage = () => {
   const { dispatch, state } = useAppStore()
@@ -58,7 +58,7 @@ export const DashboardPage = () => {
         </Space>
       </section>
 
-      {state.error && <div style={{ color: 'crimson', marginTop: 12 }}>⚠️ {state.error}</div>}
+      {state.error && <div style={{ color: 'crimson', marginTop: 12 }}>{state.error}</div>}
     </main>
   )
 }
